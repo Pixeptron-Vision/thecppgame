@@ -10,17 +10,12 @@ World::World(std::pair<int, int> dimensions,int obstacleCount, int robotCount): 
     worldMapDimensions{dimensions}, numberOfObstacles{obstacleCount}, numberOfRobots{robotCount}
 {
     std::cout<<"Initialization"<<std::endl;
-    // Map creation variables
-    //std::vector<std::pair<int, std::pair<int, int>>> robotLocationMapping;
+    // Map creation variables initialization
+    // Determine the lowest dimension of the map to compute distributionRange
+    distributionRange = worldMapDimensions.first < worldMapDimensions.second ? worldMapDimensions.first : worldMapDimensions.second;
 
-    // Robot Movement variables
-    //std::vector<bool> robotMapAccess;
     // Initialize obstacleLocations and worldMap
     createMap();
-
-
-
-
     //
 }
 // Constructor Delegations
@@ -85,21 +80,132 @@ void World::createMap()
     generateObstacleLocations();
 
     // Add obstacles to the map
-    for (auto location: obstacleLocations)
+    addToMap(obstacleLocations,'X');
+
+    // Add collectibles to the map
+    numberOfCollectibles = int(numberOfObstacles * 0.15);
+    collectibleLocations = generateCoordinates(distributionRange, numberOfCollectibles);
+    addToMap(collectibleLocations, '+');
+
+    // Add holes to the map
+    numberOfHoles = int ((level + 1) * 0.1 * numberOfObstacles);
+    holesLocations = generateCoordinates(distributionRange, numberOfHoles);
+    addToMap(holesLocations, 'O');
+
+
+    if (currentMode == single_auto || currentMode == single_manual)
     {
-        worldMap[location.first][location.second] = 'X';
+        // Mark robot destination on the map
+        destinationLocation.push_back({worldMapDimensions.first, worldMapDimensions.second});
+        addToMap(destinationLocation, '@');
+
+        // Add Robot on the map
+        startingLocations.push_back({1,1});
+        addToMap(startingLocations, 'a');
+
+    }
+    else{
+        // Add Robots to the map
+        for (auto mapping : robotLocationMapping)
+        {
+            int robotID = mapping.first;
+            std:: pair<int, int> robotLocation = mapping.second;
+            worldMap[robotLocation.first][robotLocation.second] = robotID;
+        }
     }
 
-    // Add Robots to the map
-    for (auto mapping : robotLocationMapping)
-    {
-        int robotID = mapping.first;
-        std:: pair<int, int> robotLocation = mapping.second;
-        worldMap[robotLocation.first][robotLocation.second] = robotID;
-        std::cout<<"Yes"<<std::endl;
-    }
+
+
 }
 
+
+void World:: addToMap(std::vector<std::pair<int, int>> coordinateList, char symbol)
+{
+    for (auto location: coordinateList)
+    {
+        worldMap[location.first][location.second] = symbol;
+    }
+
+}
+
+
+std::pair<int, int> World :: getStartLocation()
+{
+    return startingLocations[0];
+}
+
+
+std::pair<int, int> World:: getStopLocation()
+{
+    return destinationLocation[0];
+}
+
+
+char World:: getLocationInformation(std::pair<int, int> location)
+{
+    return worldMap[location.first][location.second];
+}
+
+
+std::vector<std::pair<int, int>> World:: getNeighborList(std::pair<int, int> location, bool clockwiseHeadRotation)
+{
+    std::vector<std::pair<int, int>> neighbors;
+    if (clockwiseHeadRotation)
+    {
+        // Add the east neighbor
+        neighbors.push_back({location.first, location.second + 1});
+        // Add the south east neighbor
+        neighbors.push_back({location.first + 1, location.second + 1});
+        // Add the south neighbor
+        neighbors.push_back({location.first + 1, location.second});
+        // Add the south west neighbor
+        neighbors.push_back({location.first + 1, location.second - 1});
+        // Add the west neighbor
+        neighbors.push_back({location.first , location.second - 1});
+        // Add the north west neighbor
+        neighbors.push_back({location.first - 1, location.second - 1});
+        // Add the north neighbor
+        neighbors.push_back({location.first - 1, location.second });
+        // Add the north east neighbor
+        neighbors.push_back({location.first - 1, location.second + 1});
+
+    }
+    else
+    {
+        // Add the east neighbor
+        neighbors.push_back({location.first, location.second + 1});
+        // Add the north east neighbor
+        neighbors.push_back({location.first - 1, location.second + 1});
+        // Add the north neighbor
+        neighbors.push_back({location.first - 1, location.second });
+        // Add the north west neighbor
+        neighbors.push_back({location.first - 1, location.second - 1});
+        // Add the west neighbor
+        neighbors.push_back({location.first , location.second - 1});
+        // Add the south west neighbor
+        neighbors.push_back({location.first + 1, location.second - 1});
+        // Add the south neighbor
+        neighbors.push_back({location.first + 1, location.second});
+        // Add the south east neighbor
+        neighbors.push_back({location.first + 1, location.second + 1});
+
+    }
+    return neighbors;
+}
+
+
+std::vector<std::pair<int, int>> World:: getTraversibleNeighborList(std::pair<int, int> location, bool clockwiseHeadRotation)
+{
+    std::vector<std::pair<int, int>> neighbors = getNeighborList(location, clockwiseHeadRotation);
+    for(auto it = neighbors.begin(); it!=neighbors.end(); ++it)
+    {
+        if (worldMap[(*it).first][(*it).second]== '*' ||  worldMap[(*it).first][(*it).second]== 'X')
+        {
+            neighbors.erase(it);
+        }
+    }
+    return neighbors;
+}
 
 std::vector<std::pair<int, int>> World:: generateCoordinates(int distributionRange, int numberOfCoordinates)
 {
@@ -140,13 +246,44 @@ std::vector<std::pair<int, int>> World:: generateCoordinates(int distributionRan
 
 void World::generateObstacleLocations()
 {
-    // Determine the lowest dimension of the map
-    int N = worldMapDimensions.first < worldMapDimensions.second ? worldMapDimensions.first : worldMapDimensions.second;
-    obstacleLocations = generateCoordinates(N, numberOfObstacles);
-    for(auto loc : obstacleLocations)std::cout<<loc.first<<","<<loc.second<<" ";
-    std::cout<<"\n";
+    obstacleLocations = generateCoordinates(distributionRange, numberOfObstacles);
 }
 
+
+bool World:: isValidMove(std::pair<int, int> nextPosition)
+{
+    // If the next location is an empty space without an obstacle, return true
+    if (worldMap[nextPosition.first][nextPosition.second]== '-')
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+std::pair<int, int> World:: getWorldDimensions()
+{
+    return worldMapDimensions;
+}
+
+bool World:: moveFromTo(std::pair<int, int> currentLocation, std::pair<int, int> nextLocation, char robotID)
+{
+    bool validateMove = isValidMove(nextLocation);
+    if (validateMove)
+    {
+        // Move the robot to the next location
+        worldMap[nextLocation.first][nextLocation.second] = robotID;
+        // Empty the previous location from where robot has been displaced
+        worldMap[currentLocation.first][currentLocation.second] = '-';
+        return true;
+
+    }
+    else{
+        return false;
+    }
+}
 /*
 Robot World::addRobot(std::pair<int, int> startPosition, direction head, bool motion, bool mode, bool status)
 {

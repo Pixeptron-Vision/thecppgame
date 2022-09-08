@@ -1,45 +1,42 @@
 #ifndef ROBOT_H_
 #define ROBOT_H_
-enum direction{East, NorthEast, North, NorthWest, West, SouthWest, South, SouthEast};
-#include "worldmap.h"
 #include "game.h"
-// Directions Reference:
-//
-//      (135°)     (90°)    (45°)
-//      NORTH-WEST NORTH  NORTH-EAST
-//               \   |   /
-//                \  |  /
-//                 \ | /
-//                  \|/
-//    (180°)WEST --------- EAST (0°)
-//                  /|\
-//                 / | \
-//                /  |  \
-//               /   |   \
-//     SOUTH-WEST  SOUTH  SOUTH-EAST
-//      (225°)     (270°)   (315°)
-// Define and implement the following class
+
+class World; //Forward Declaration
 class Robot: protected Game {
  private:
-    std::pair<int, int> location;
-    std::vector<std::pair<int, int>> trail;
-    std::pair<int, int> autoNextMove();
-    direction head; //default 0
-    bool autoMode; //default true
-    bool isStuck; // default false
+
+    std::pair<int, int> startLocation; //default {1,1}
+    std::pair<int, int> stopLocation; // init by map dimension
+    direction head; //default North
     bool movesClockwise; //default true
+    mode operationMode; //default single_auto
+    bool isStuck; // default false
+    std::pair<int, int> currentLocation; // default {1,1}
+    std::vector<std::pair<int, int>> trail;
+    static int numberOfRobots; // default - 1
+    float robotTimeUnit; // default 250
+    std::chrono::time_point< std::chrono::high_resolution_clock> startTime;
+    // Methods
+    std::pair<int, int> autoNextMove();
+
  public:
+    // Constructors
     Robot();
-    Robot(std::pair<int, int> startPosition, direction head, bool motion, bool mode, bool status);
+    Robot(std::pair<int, int> startPosition, std::pair<int, int> stopPosition, direction head, bool motionDirection, mode opMode, float robotTimeUnit);
+    // Destructor
     ~Robot();
-    friend bool addRobot(std::pair<int, int> startPosition, direction head, bool motion, bool mode, bool status);
     // Helper Functions
-    void run(); //Creates a multithreading instance
+
+    //friend bool addRobot(std::pair<int, int> startPosition, direction head, bool motion, bool mode, bool status);
+    void run(); //Works on a robot thread instance
     bool nextMove(); // works both for auto and manual mode
     void setStartingLocation(std::pair<int, int> coordinate); // used in manual mode
     bool flipDirection(); // used in manual & auto modes
+    std::vector<std::pair<int, int>> shortestPathBFS(World wmap);
+    float getRobotTimeUnit();
+    void setRobotTimeUnit(float robotTime);
     //friend bool World::isValidMove(std::pair<int, int> nextPosition);
-
 
 };
 

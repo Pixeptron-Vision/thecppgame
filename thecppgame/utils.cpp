@@ -1,4 +1,5 @@
 #include <iostream>
+#include <thread>
 #include "utils.h"
 #include "game.h"
 #include "utility"
@@ -125,4 +126,15 @@ mode askMode()
     }while(!validModeSelection);
 
     return gameMode;
+}
+
+void displayList(std::vector<std::pair<int, int>> locationList)
+{
+    std::cout<<"Displaying the Trail\n";
+    for(auto it=locationList.begin(); it!=locationList.end(); ++it)
+    {
+        std::cout<<"("<<(*it).first<<","<<(*it).second<<") --> ";
+    }
+    std::cout<<"\n";
+
 }
