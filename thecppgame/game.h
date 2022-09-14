@@ -24,13 +24,14 @@ class World; //Forward Declaration
 class Robot; //Forward Declaration
 class Game{
  private:
+
+ protected:
     int activeRobots;
     bool startGame;
     bool quitGame;
     bool pauseGame;
     bool resumeGame;
     bool gameEnd;
- protected:
     mode currentMode;
     std::chrono::time_point<std::chrono::high_resolution_clock> gameStartTime;
     std::chrono::milliseconds gameTimeLimit;
@@ -43,9 +44,9 @@ class Game{
 
     bool run(); // function to start the game
     std::chrono::milliseconds determineGameTime(std::pair<int, int> dimensions, float robotTimeUnit=250, float agilityFactor=1.1);
-    bool spawnRobots(int numberOfRobots,std::pair<int, int> startPosition, std::pair<int, int> stopPosition,
-                     direction head=North, bool motionDirection= true, mode opMode = single_auto, float robotTimeUnit=250 );
-    void runRobot(Robot agent);
+    bool spawnRobots(World wmap, int numberOfRobots=1, float robotTimeUnit=250 );
+    void runRobot(Robot agent, World wmap);
+    bool timeOut();
     bool stop(); // not in use yet
     bool pause(); // not in use yet
     bool resume(); // not in use yet

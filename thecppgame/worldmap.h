@@ -4,6 +4,15 @@
 #include <utility>
 #include "game.h"
 
+struct Arena{
+    char content;
+    bool flag;
+    std::pair<int, int> previous;
+    std::pair<int, int> next;
+};
+
+typedef Arena Arena;
+
 class World : protected Game{
  private:
     // Map creation variables
@@ -13,7 +22,7 @@ class World : protected Game{
     int numberOfCollectibles;
     int numberOfHoles;
     int distributionRange;
-    std::vector<std::vector<char>> worldMap;
+    std::vector<std::vector<Arena>> worldMap;
     std::vector<std::pair<int, int>> obstacleLocations;
     std::vector<std::pair<int, int>> collectibleLocations;
     std::vector<std::pair<int, int>> holesLocations;
@@ -46,13 +55,20 @@ class World : protected Game{
     ~World();
 
     // Helper Functions
-    void show();
+    void show(int fieldID=0);
     void setMode();
     bool addRobot(std::pair<int, int> startPosition, direction head, bool motion, bool mode, bool status);
     bool moveFromTo(std::pair<int, int> currentLocation, std::pair<int, int> nextLocation, char robotID);
     std::pair<int , int> getRobotLocation(int robotID, int steps);
     std::pair<int, int> getWorldDimensions();
-    char getLocationInformation(std::pair<int, int> location);
+    bool getLocationFlag(std::pair<int, int> location);
+    char getLocationContent(std::pair<int, int> location);
+    std::pair<int,int> getLocationPrevious(std::pair<int, int> location);
+    std::pair<int,int> getLocationNext(std::pair<int, int> location);
+    void setLocationNext(std::pair<int, int> location,std::pair<int, int> information);
+    void setLocationPrevious(std::pair<int, int> location,std::pair<int, int> information);
+    void setLocationContent(std::pair<int, int> location,char information);
+    void setLocationFlag(std::pair<int, int> location,bool information);
     std::vector<std::pair<int, int>> getTraversibleNeighborList(std::pair<int, int> location, bool clockwiseHeadRotation= true);
     std::vector<std::pair<int, int>> getNeighborList(std::pair<int, int> location, bool clockwiseHeadRotation= true);
     std::pair<int, int> getStartLocation();

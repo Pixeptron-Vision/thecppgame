@@ -52,17 +52,30 @@ void World::createMap()
 
     // Map Creation Step - 1: Initiate a 2D Vector
     // Create map empty space template
-    std::vector<char> buildingBlock(breadth + 2, '-');
-
+    std::vector<Arena> buildingBlock(breadth + 2);
+    for(auto it = buildingBlock.begin(); it!=buildingBlock.end(); ++it)
+    {
+        (*it).content = '-';
+        (*it).flag = false;
+        (*it).previous = {0,0};
+        (*it).next = {0,0};
+    }
     // Add boundaries to the space
     auto iter = buildingBlock.begin();
-    *iter = '*';
+    (*iter).content = '*';
     iter = buildingBlock.end();
     --iter;
-    *iter = '*';
+    (*iter).content = '*';
 
     // Create Boundary Template
-    std::vector<char> boundary(breadth + 2, '*');
+    std::vector<Arena> boundary(breadth + 2);
+    for(auto it = boundary.begin(); it!=boundary.end(); ++it)
+    {
+        (*it).content = '*';
+        (*it).flag = false;
+        (*it).previous = {0,0};
+        (*it).next = {0,0};
+    }
 
     // Add the upper boundary to the map
     worldMap.push_back(boundary);
@@ -110,11 +123,9 @@ void World::createMap()
         {
             int robotID = mapping.first;
             std:: pair<int, int> robotLocation = mapping.second;
-            worldMap[robotLocation.first][robotLocation.second] = robotID;
+            (worldMap[robotLocation.first][robotLocation.second]).content = robotID;
         }
     }
-
-
 
 }
 
@@ -123,9 +134,35 @@ void World:: addToMap(std::vector<std::pair<int, int>> coordinateList, char symb
 {
     for (auto location: coordinateList)
     {
-        worldMap[location.first][location.second] = symbol;
+        (worldMap[location.first][location.second]).content = symbol;
     }
 
+}
+
+
+void World::setLocationNext(std::pair<int, int> location,std::pair<int, int> information)
+{
+    (worldMap[location.first][location.second]).next.first = information.first;
+    (worldMap[location.first][location.second]).next.second = information.second;
+}
+
+
+void World::setLocationPrevious(std::pair<int, int> location,std::pair<int, int> information)
+{
+    (worldMap[location.first][location.second]).previous.first = information.first;
+    (worldMap[location.first][location.second]).previous.second = information.second;
+}
+
+
+void World::setLocationContent(std::pair<int, int> location,char information)
+{
+    (worldMap[location.first][location.second]).content = information;
+}
+
+
+void World::setLocationFlag(std::pair<int, int> location,bool information)
+{
+    (worldMap[location.first][location.second]).flag = information;
 }
 
 
@@ -141,15 +178,34 @@ std::pair<int, int> World:: getStopLocation()
 }
 
 
-char World:: getLocationInformation(std::pair<int, int> location)
+bool World::getLocationFlag(std::pair<int, int> location)
 {
-    return worldMap[location.first][location.second];
+    return (worldMap[location.first][location.second]).flag;
+}
+
+
+char World::getLocationContent(std::pair<int, int> location)
+{
+     return (worldMap[location.first][location.second]).content;
+}
+
+
+std::pair<int,int> World::getLocationPrevious(std::pair<int, int> location)
+{
+    return (worldMap[location.first][location.second]).previous;
+}
+
+
+std::pair<int,int> World::getLocationNext(std::pair<int, int> location)
+{
+    return (worldMap[location.first][location.second]).next;
 }
 
 
 std::vector<std::pair<int, int>> World:: getNeighborList(std::pair<int, int> location, bool clockwiseHeadRotation)
 {
     std::vector<std::pair<int, int>> neighbors;
+    //std::cout<<location.first<<", "<<location.second<<"\n"; //optional to check the coordinates
     if (clockwiseHeadRotation)
     {
         // Add the east neighbor
@@ -197,15 +253,25 @@ std::vector<std::pair<int, int>> World:: getNeighborList(std::pair<int, int> loc
 std::vector<std::pair<int, int>> World:: getTraversibleNeighborList(std::pair<int, int> location, bool clockwiseHeadRotation)
 {
     std::vector<std::pair<int, int>> neighbors = getNeighborList(location, clockwiseHeadRotation);
+    std::vector<std::pair<int, int>> filteredNeighbors;
+
     for(auto it = neighbors.begin(); it!=neighbors.end(); ++it)
     {
-        if (worldMap[(*it).first][(*it).second]== '*' ||  worldMap[(*it).first][(*it).second]== 'X')
+        if (!(worldMap[(*it).first][(*it).second].content== '*' ||  worldMap[(*it).first][(*it).second].content== 'X'))
         {
-            neighbors.erase(it);
+            filteredNeighbors.push_back({(*it).first, (*it).second});
         }
     }
-    return neighbors;
+    /*
+    std::cout<<"Filtered Neighbors\n";
+    for(auto it=filteredNeighbors.begin(); it!=filteredNeighbors.end(); ++it)
+    {
+        std::cout<<(*it).first<<", "<<(*it).second<<std::endl; // Optional to check the coordinates read
+    }
+    */
+    return filteredNeighbors;
 }
+
 
 std::vector<std::pair<int, int>> World:: generateCoordinates(int distributionRange, int numberOfCoordinates)
 {
@@ -253,7 +319,7 @@ void World::generateObstacleLocations()
 bool World:: isValidMove(std::pair<int, int> nextPosition)
 {
     // If the next location is an empty space without an obstacle, return true
-    if (worldMap[nextPosition.first][nextPosition.second]== '-')
+    if ((worldMap[nextPosition.first][nextPosition.second]).content== '-')
     {
         return true;
     }
@@ -274,9 +340,9 @@ bool World:: moveFromTo(std::pair<int, int> currentLocation, std::pair<int, int>
     if (validateMove)
     {
         // Move the robot to the next location
-        worldMap[nextLocation.first][nextLocation.second] = robotID;
+        (worldMap[nextLocation.first][nextLocation.second]).content = robotID;
         // Empty the previous location from where robot has been displaced
-        worldMap[currentLocation.first][currentLocation.second] = '-';
+        (worldMap[currentLocation.first][currentLocation.second]).content = '-';
         return true;
 
     }
@@ -301,16 +367,40 @@ Robot World::addRobot(std::pair<int, int> startPosition, direction head, bool mo
 
 */
 
-void World::show()
+void World::show(int fieldID)
 {
     int length = worldMapDimensions.first;
     int breadth = worldMapDimensions.second;
     // Print
+
     for (auto &row : worldMap)
     {
         for(auto &col : row)
         {
-            std::cout<<" "<<col<<" ";
+            switch(fieldID)
+            {
+                case 0:
+                    {
+                        std::cout<<" "<<col.content<<" ";
+                        break;
+                    }
+                case 1:
+                    {
+                        std::cout<<" "<<col.flag<<" ";
+                        break;
+                    }
+                case 2:
+                    {
+                        std::cout<<"("<<col.previous.first<<", "<<col.previous.second<<")";
+                        break;
+                    }
+                case 3:
+                    {
+                        std::cout<<"("<<col.next.first<<", "<<col.next.second<<")";
+                        break;
+                    }
+            }
+
         }
         std::cout<<"\n";
     }

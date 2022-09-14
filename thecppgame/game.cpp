@@ -64,30 +64,69 @@ bool Game:: run()
 }
 
 
-void Game::runRobot(Robot agent)
+bool Game:: timeOut()
+{
+    auto timeNow = std::chrono::high_resolution_clock::now();
+    gameTimeDuration = std::chrono::duration_cast<std::chrono::milliseconds>( gameStartTime - timeNow); // Negative Number
+    //std::cout<<"Robot: "<<gameTimeDuration.count()<<"  /  "<<gameTimeLimit.count()<<std::endl;
+    if (-gameTimeDuration.count() < gameTimeLimit.count())
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+
+void Game::runRobot(Robot agent, World wmap)
 {
     // Robot agent's operation thread.
     // Each robot agent follows the next sequence of instructions
-    bool jobDone = false;
-    std::cout<<"In runRobot "<<std::endl;
+    bool timeUp;
+
     do{
         // Execute BFS on the current map for determining the shortest path
         // Follow the shortest path and update the display continuously
+        std::vector<std::pair<int, int>> path = agent.shortestPathBFS(wmap);
+        gameEnd = true;
+        std::cout<<"Robot Path: "<<std::endl;
+        for (auto it = path.rbegin(); it!=path.rend(); ++it)
+        {
+            std::cout<<(*it).first<<","<<(*it).second<<" --> ";
+            wmap.setLocationContent(*it, ',');
+        }
+        std::cout<<"\n";
+        timeUp = timeOut();
 
-        auto timeNow = std::chrono::high_resolution_clock::now();
-        gameTimeDuration = std::chrono::duration_cast<std::chrono::milliseconds>( gameStartTime - timeNow);
-        //std::cout<<"Robot: "<<gameTimeDuration.count()<<"  /  "<<gameTimeLimit.count()<<std::endl;
-
-    }while(-gameTimeDuration.count() < gameTimeLimit.count() && jobDone == false);
-
+    }while(!(timeUp || gameEnd));
+    std::cout<<"Map with Robot Path: "<<std::endl;
+    wmap.show();
+    /*
+    wmap.show(1);
+    std::cout<<"Previous"<<std::endl;
+    wmap.show(2);
+    std::cout<<"Next"<<std::endl;
+    wmap.show(3);
+    */
+    std::cout<<"Closing the thread!"<<std::endl;
 
 }
 
 
-bool Game::spawnRobots(int numberOfRobots, std::pair<int, int> startPosition, std::pair<int, int> stopPosition,
-                     direction head, bool motionDirection, mode opMode, float robotTimeUnit)
+bool Game::spawnRobots(World wmap, int numberOfRobots, float robotTimeUnit)
 {
+    // Init Robot Parameters
+    std::pair<int, int> startPosition = wmap.getStartLocation();
+    std::pair<int, int> stopPosition = wmap.getStopLocation();
+    direction head = North;
+    bool motionDirection= true;
+    mode opMode = single_auto;
+
+    // Init operation status variable
     bool success {true};
+
     // Spawn the robot agents
     try
     {
@@ -96,11 +135,11 @@ bool Game::spawnRobots(int numberOfRobots, std::pair<int, int> startPosition, st
                 // Create a robot object
                 Robot agent(startPosition, stopPosition, head, motionDirection, opMode, robotTimeUnit); // Initiialize robot with appropriate parameters
                 // Evoke a thread for the robot object
-                std::thread t1(&Game::runRobot, this, agent);
+                std::thread t1(&Game::runRobot, this, agent, wmap);
                 // std::this_thread :: sleep_for(std::chrono::milliseconds(1000));
                 thread_guard safe_thread(t1);
                 t1.detach();
-                std::cout<<"Thread "<<i<<" Detatched!"<<std::endl;
+                std::cout<<"Thread "<<i<<" Detached!"<<std::endl;
             }
     }
     catch (int &ex)
@@ -135,11 +174,10 @@ bool Game:: playSingleAuto(World& wmap)
     std::cout<<"In Play "<<std::endl;
     // Display the map on to the screen
     wmap.show();
-    std::pair<int, int> startPosition = wmap.getStartLocation();
-    std::pair<int, int> stopPosition = wmap.getStopLocation();
+
     // Set the game time limits
     gameTimeLimit = determineGameTime(wmap.getWorldDimensions());
-    bool robotinit = spawnRobots(1, startPosition, stopPosition);
+    bool robotinit = spawnRobots(wmap);
 
     if (robotinit)
     {
@@ -154,6 +192,7 @@ bool Game:: playSingleAuto(World& wmap)
 
         }while(-gameTimeDuration.count() < gameTimeLimit.count());
     }
+
     std::cout<<"Game Duration Ended"<<std::endl;
 
     return true;

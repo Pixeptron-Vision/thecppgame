@@ -33,7 +33,7 @@ class Robot: protected Game {
     bool nextMove(); // works both for auto and manual mode
     void setStartingLocation(std::pair<int, int> coordinate); // used in manual mode
     bool flipDirection(); // used in manual & auto modes
-    std::vector<std::pair<int, int>> shortestPathBFS(World wmap);
+    std::vector<std::pair<int, int>> shortestPathBFS(World& wmap);
     float getRobotTimeUnit();
     void setRobotTimeUnit(float robotTime);
     //friend bool World::isValidMove(std::pair<int, int> nextPosition);

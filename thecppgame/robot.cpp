@@ -37,52 +37,71 @@ void Robot:: run()
 
 }
 
-std::vector<std::pair<int, int>> Robot:: shortestPathBFS(World wmap)
+
+std::vector<std::pair<int, int>> Robot:: shortestPathBFS(World& wmap)
 {
 
     // Declare the Queue, vector for storing path and array to store flags
     std::deque<std::pair<int, int>> Q;
-    std::vector<std::pair<int, int>> forwardPath;
-    std::vector<std::pair<int, int>> backwardPath;
+
     // Init the node flag of the environment
     std::pair<int, int> dimensions = wmap.getWorldDimensions();
-    std::vector<bool> temp(dimensions.second, false);
-    std::vector<std::vector<bool>> visitedNodeFlags(dimensions.first,temp );  // has to be initialized
+    std::vector<bool> temp(dimensions.second + 2, false);
+    std::vector<std::vector<bool>> visitedNodeFlags(dimensions.first + 2,temp );  // has to be initialized
+
     // Set the starting location as visited
-    visitedNodeFlags[startLocation.first][startLocation.second] = true;
+    //visitedNodeFlags[startLocation.first][startLocation.second] = true;
+    wmap.setLocationFlag(startLocation, true);
+
     // Initialize the Queue and add starting node to it
     Q.push_back(startLocation);
+
     // Start the search for path
     while(Q.size() > 0)
     {
         std::pair<int, int> node = Q[0];
+        //std::cout<<"Captured the first node off the queue: ("<< node.first<<", "<<node.second<<")\n";
         if (node.first == stopLocation.first && node.second == stopLocation.second)
         {
             // If you come across the destination location, stop search
-            forwardPath.push_back(node);
+            std::cout<<"Reached the Destination\n";
             break;
         }
+
         // get the neighbor list for the node
         std::vector<std::pair<int, int>> neighbors = wmap.getTraversibleNeighborList(node);
+
         for(auto it = neighbors.begin(); it!=neighbors.end(); ++it)
         {
-            if(visitedNodeFlags[(*it).first][(*it).second]== false)
+            //std::cout<<"Coordinate processed: "<<visitedNodeFlags[(*it).first][(*it).second]<<" : "<<(*it).first<<", "<<(*it).second<<std::endl; // Optional to check the coordinates read
+            if(wmap.getLocationFlag(*it)== false)  // visitedNodeFlags[(*it).first][(*it).second]== false
             {
                 // If the node neighbor is not visited, add it to the queue
+                //std::cout<<"Added Neighbor: "<<(*it).first<<", "<<(*it).second<<std::endl; // Optional to check the coordinates read
                 Q.push_back(*it);
-                visitedNodeFlags[(*it).first][(*it).second]= true;
-                backwardPath.push_back(*it);
+                //visitedNodeFlags[(*it).first][(*it).second]= true;
+                wmap.setLocationFlag(*it, true);
+                wmap.setLocationPrevious(*it, node);
+                wmap.setLocationNext(node, *it);
 
             }
 
         }
         Q.pop_front();
-        forwardPath.push_back(node);
 
     }
 
-
-    return backwardPath;
+    std::vector<std::pair<int, int>> shortestPath;
+    std::pair<int,int> current = stopLocation;
+    //std::cout<<"Start Location: "<<startLocation.first<<" "<<startLocation.second<<"\n";
+    shortestPath.push_back(current);
+    while(current.first != startLocation.first || current.second !=startLocation.second)
+    {
+        current = wmap.getLocationPrevious(current);
+        shortestPath.push_back(current);
+        //std::cout<<"("<<current.first<<", "<<current.second<<") ";
+    }
+    return shortestPath;
     /*
 
     int index =finish;
