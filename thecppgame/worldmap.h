@@ -9,6 +9,7 @@ struct Arena{
     bool flag;
     std::pair<int, int> previous;
     std::pair<int, int> next;
+    char trail;
 };
 
 typedef Arena Arena;
@@ -56,23 +57,34 @@ class World : protected Game{
 
     // Helper Functions
     void show(int fieldID=0);
-    void setMode();
     bool addRobot(std::pair<int, int> startPosition, direction head, bool motion, bool mode, bool status);
     bool moveFromTo(std::pair<int, int> currentLocation, std::pair<int, int> nextLocation, char robotID);
+    // Getters
     std::pair<int , int> getRobotLocation(int robotID, int steps);
     std::pair<int, int> getWorldDimensions();
     bool getLocationFlag(std::pair<int, int> location);
     char getLocationContent(std::pair<int, int> location);
+    char getLocationTrail(std::pair<int, int> location);
     std::pair<int,int> getLocationPrevious(std::pair<int, int> location);
     std::pair<int,int> getLocationNext(std::pair<int, int> location);
+    std::vector<std::pair<int, int>> getTraversibleNeighborList(std::pair<int, int> location, direction headDirection=East, bool clockwiseHeadRotation= true);
+    std::vector<std::pair<int, int>> getNeighborList(std::pair<int, int> location, direction headDirection=East, bool clockwiseHeadRotation= true);
+    std::pair<int, int> getStartLocation();
+    std::pair<int, int> getStopLocation();
+    // Setters
+    void setMode();
+    void setObstacleCount(int obstacleCount);
+    void resetObstacleLocations();
+    void setCollectibleCount(int collectibleCount);
+    void resetCollectibleLocations();
+    void setHoles(int holeCount);
+    void resetHoleLocations();
     void setLocationNext(std::pair<int, int> location,std::pair<int, int> information);
     void setLocationPrevious(std::pair<int, int> location,std::pair<int, int> information);
     void setLocationContent(std::pair<int, int> location,char information);
     void setLocationFlag(std::pair<int, int> location,bool information);
-    std::vector<std::pair<int, int>> getTraversibleNeighborList(std::pair<int, int> location, bool clockwiseHeadRotation= true);
-    std::vector<std::pair<int, int>> getNeighborList(std::pair<int, int> location, bool clockwiseHeadRotation= true);
-    std::pair<int, int> getStartLocation();
-    std::pair<int, int> getStopLocation();
+    void setLocationTrail(std::pair<int, int> location,char information);
+
 
 };
 

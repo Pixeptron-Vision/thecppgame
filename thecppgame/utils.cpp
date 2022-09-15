@@ -70,8 +70,8 @@ int askNumberOfIterations()
     int numberOfIterations = 0;
     bool validIterationCountReceived = false;
     do {
-        std::cout<<"Enter the number of iterations for the program >>\n";
-        std::cout<<"Note: Number of Iterations must be > 0 "<<std::endl;
+        std::cout<<"Enter the number of games suggested >>\n";
+        std::cout<<"Note: Number of games > 0"<<std::endl;
         std::cin>>numberOfIterations;
         if(numberOfIterations > 0 )
         {
@@ -128,6 +128,7 @@ mode askMode()
     return gameMode;
 }
 
+
 void displayList(std::vector<std::pair<int, int>> locationList)
 {
     std::cout<<"Displaying the Trail\n";
@@ -136,5 +137,54 @@ void displayList(std::vector<std::pair<int, int>> locationList)
         std::cout<<"("<<(*it).first<<","<<(*it).second<<") --> ";
     }
     std::cout<<"\n";
+
+}
+
+
+direction askHeadDirection()
+{
+    int headDirection;
+    std::cout<<"Enter Robot Head Direction (Default: North) "<<std::endl;
+    std::cout<<"Enter: 0 for E, 1 for NE, 2 for N, 3 for NW, 4 for W, 5 for SW, 6 for S, 7 for SE >>"<<std::endl;
+    std::cin>>headDirection;
+    switch(headDirection)
+    {
+    case 0:
+        {
+            return East;
+        }
+    case 1:
+        {
+            return NorthEast;
+        }
+    case 2:
+        {
+            return North;
+        }
+    case 3:
+        {
+            return NorthWest;
+        }
+    case 4:
+        {
+            return West;
+        }
+    case 5:
+        {
+            return SouthWest;
+        }
+    case 6:
+        {
+            return South;
+        }
+    case 7:
+        {
+            return SouthEast;
+        }
+    default:
+        {
+            return North;
+        }
+    }
 
 }

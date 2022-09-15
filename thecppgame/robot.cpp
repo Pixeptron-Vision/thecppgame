@@ -12,6 +12,7 @@ Robot:: Robot(std::pair<int, int> startPosition, std::pair<int, int> stopPositio
 {
     // Init the start time
     startTime = std::chrono::high_resolution_clock::now();
+    life = 3;
 }
 
 
@@ -35,6 +36,12 @@ void Robot:: setRobotTimeUnit(float robotTime)
 void Robot:: run()
 {
 
+}
+
+
+direction Robot::getHeadDirection()
+{
+    return head;
 }
 
 
@@ -69,7 +76,7 @@ std::vector<std::pair<int, int>> Robot:: shortestPathBFS(World& wmap)
         }
 
         // get the neighbor list for the node
-        std::vector<std::pair<int, int>> neighbors = wmap.getTraversibleNeighborList(node);
+        std::vector<std::pair<int, int>> neighbors = wmap.getTraversibleNeighborList(node, head);
 
         for(auto it = neighbors.begin(); it!=neighbors.end(); ++it)
         {
@@ -97,27 +104,21 @@ std::vector<std::pair<int, int>> Robot:: shortestPathBFS(World& wmap)
     shortestPath.push_back(current);
     while(current.first != startLocation.first || current.second !=startLocation.second)
     {
+        char content = wmap.getLocationContent(current);
+        if (content == 'O')
+        {
+            life--;
+        }
+        else if(content == '+')
+        {
+            life++;
+        }
         current = wmap.getLocationPrevious(current);
+
         shortestPath.push_back(current);
         //std::cout<<"("<<current.first<<", "<<current.second<<") ";
     }
     return shortestPath;
-    /*
-
-    int index =finish;
-    deque<int>shortestPath;
-    shortestPath.push_back(finish);
-    int shortestPathLength = 0;
-    while(index!=start)
-    {
-        shortestPathLength++;
-        index = previousNode[index];
-        shortestPath.push_front(index);
-    }
-    cout<<"Shortest Path Length:- "<<shortestPathLength<<endl;
-    return shortestPath;
-
-    */
 
 
 }

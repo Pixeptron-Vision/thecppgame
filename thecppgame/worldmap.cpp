@@ -59,6 +59,7 @@ void World::createMap()
         (*it).flag = false;
         (*it).previous = {0,0};
         (*it).next = {0,0};
+        (*it).trail = '*';
     }
     // Add boundaries to the space
     auto iter = buildingBlock.begin();
@@ -75,6 +76,7 @@ void World::createMap()
         (*it).flag = false;
         (*it).previous = {0,0};
         (*it).next = {0,0};
+        (*it).trail = '*';
     }
 
     // Add the upper boundary to the map
@@ -160,6 +162,12 @@ void World::setLocationContent(std::pair<int, int> location,char information)
 }
 
 
+void World::setLocationTrail(std::pair<int, int> location,char information)
+{
+    (worldMap[location.first][location.second]).trail = information;
+}
+
+
 void World::setLocationFlag(std::pair<int, int> location,bool information)
 {
     (worldMap[location.first][location.second]).flag = information;
@@ -190,6 +198,12 @@ char World::getLocationContent(std::pair<int, int> location)
 }
 
 
+char World::getLocationTrail(std::pair<int, int> location)
+{
+     return (worldMap[location.first][location.second]).trail;
+}
+
+
 std::pair<int,int> World::getLocationPrevious(std::pair<int, int> location)
 {
     return (worldMap[location.first][location.second]).previous;
@@ -202,7 +216,7 @@ std::pair<int,int> World::getLocationNext(std::pair<int, int> location)
 }
 
 
-std::vector<std::pair<int, int>> World:: getNeighborList(std::pair<int, int> location, bool clockwiseHeadRotation)
+std::vector<std::pair<int, int>> World:: getNeighborList(std::pair<int, int> location,direction headDirection, bool clockwiseHeadRotation)
 {
     std::vector<std::pair<int, int>> neighbors;
     //std::cout<<location.first<<", "<<location.second<<"\n"; //optional to check the coordinates
@@ -246,13 +260,61 @@ std::vector<std::pair<int, int>> World:: getNeighborList(std::pair<int, int> loc
         neighbors.push_back({location.first + 1, location.second + 1});
 
     }
+    // Rotate the neighbors list to make sure head points the first neighbor
+    switch(headDirection)
+    {
+    case East:
+        {
+            return neighbors;
+        }
+    case SouthEast:
+        {
+            std::rotate(neighbors.begin(),neighbors.begin()+1,neighbors.end());
+            break;
+        }
+    case South:
+        {
+            std::rotate(neighbors.begin(),neighbors.begin()+2,neighbors.end());
+            break;
+        }
+    case SouthWest:
+        {
+            std::rotate(neighbors.begin(),neighbors.begin()+3,neighbors.end());
+            break;
+        }
+    case West:
+        {
+            std::rotate(neighbors.begin(),neighbors.begin()+4,neighbors.end());
+            break;
+        }
+    case NorthWest:
+        {
+            std::rotate(neighbors.begin(),neighbors.begin()+5,neighbors.end());
+            break;
+        }
+    case North:
+        {
+            std::rotate(neighbors.begin(),neighbors.begin()+6,neighbors.end());
+            break;
+        }
+    case NorthEast:
+        {
+            std::rotate(neighbors.begin(),neighbors.begin()+7,neighbors.end());
+            break;
+        }
+    default:
+        {
+            // default East
+            return neighbors;
+        }
+    }
     return neighbors;
 }
 
 
-std::vector<std::pair<int, int>> World:: getTraversibleNeighborList(std::pair<int, int> location, bool clockwiseHeadRotation)
+std::vector<std::pair<int, int>> World:: getTraversibleNeighborList(std::pair<int, int> location,direction head, bool clockwiseHeadRotation)
 {
-    std::vector<std::pair<int, int>> neighbors = getNeighborList(location, clockwiseHeadRotation);
+    std::vector<std::pair<int, int>> neighbors = getNeighborList(location, head, clockwiseHeadRotation);
     std::vector<std::pair<int, int>> filteredNeighbors;
 
     for(auto it = neighbors.begin(); it!=neighbors.end(); ++it)
@@ -307,6 +369,69 @@ std::vector<std::pair<int, int>> World:: generateCoordinates(int distributionRan
     }
 
     return  coordinates;
+}
+
+void World::setObstacleCount(int obstacleCount)
+{
+    numberOfObstacles = obstacleCount;
+}
+
+
+void World::setCollectibleCount(int collectibleCount)
+{
+    numberOfCollectibles = collectibleCount;
+}
+
+
+void World::setHoles(int holesCount)
+{
+    numberOfHoles = holesCount;
+}
+
+
+void World::resetCollectibleLocations()
+{
+    // Clear obstacle Locations
+    addToMap(collectibleLocations, '-');
+    // Add collectibles to the map
+    numberOfCollectibles = int(numberOfObstacles * 0.15);
+    // Generate new set of collectibles as per the updated count
+    collectibleLocations = generateCoordinates(distributionRange, numberOfCollectibles);
+    // Add the generated collectibles to the map
+    addToMap(collectibleLocations, '+');
+    // Make sure that holes don't replace start and end points
+    addToMap(destinationLocation, '@');
+    addToMap(startingLocations, 'a');
+}
+
+
+void World::resetHoleLocations()
+{
+    // Clear hOLE Locations
+    addToMap(holesLocations, '-');
+    // update number of holes on the map
+    numberOfHoles = int ((level + 1) * 0.1 * numberOfObstacles);
+    // Generate new set of hole locations
+    holesLocations = generateCoordinates(distributionRange, numberOfHoles);
+    // Add generated holes to the map
+    addToMap(holesLocations, 'O');
+    // Make sure that holes don't replace start and end points
+    addToMap(destinationLocation, '@');
+    addToMap(startingLocations, 'a');
+}
+
+
+void World::resetObstacleLocations()
+{
+    // Clear obstacle Locations
+    addToMap(obstacleLocations, '-');
+    // Generate new set of obstacles as per the updated obstacle count
+    generateObstacleLocations();
+    // Add the generated obstacles to the map
+    addToMap(obstacleLocations, 'X');
+    // Make sure that holes don't replace start and end points
+    addToMap(destinationLocation, '@');
+    addToMap(startingLocations, 'a');
 }
 
 
@@ -397,6 +522,11 @@ void World::show(int fieldID)
                 case 3:
                     {
                         std::cout<<"("<<col.next.first<<", "<<col.next.second<<")";
+                        break;
+                    }
+                case 4:
+                    {
+                        std::cout<<" "<<col.trail<<" ";
                         break;
                     }
             }

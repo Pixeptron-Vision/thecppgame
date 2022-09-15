@@ -28,5 +28,5 @@ int askNumberOfObstacles(std::pair<int, int> mapDimensions);
 int askNumberOfIterations();
 mode askMode();
 void displayList(std::vector<std::pair<int, int>> locationList);
-
+direction askHeadDirection();
 #endif

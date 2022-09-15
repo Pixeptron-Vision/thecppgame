@@ -26,6 +26,8 @@ class Robot: protected Game {
     Robot(std::pair<int, int> startPosition, std::pair<int, int> stopPosition, direction head, bool motionDirection, mode opMode, float robotTimeUnit);
     // Destructor
     ~Robot();
+    int life;
+
     // Helper Functions
 
     //friend bool addRobot(std::pair<int, int> startPosition, direction head, bool motion, bool mode, bool status);
@@ -36,6 +38,7 @@ class Robot: protected Game {
     std::vector<std::pair<int, int>> shortestPathBFS(World& wmap);
     float getRobotTimeUnit();
     void setRobotTimeUnit(float robotTime);
+    direction getHeadDirection();
     //friend bool World::isValidMove(std::pair<int, int> nextPosition);
 
 };
