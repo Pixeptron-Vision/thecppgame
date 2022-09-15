@@ -31,21 +31,23 @@ bool Game:: run()
         int iterations = askNumberOfIterations();
         std::cout<<"Number of games suggested: "<<iterations<<"\n"<<std::endl;
         std::cout<<"\n -------------------------------------------------------------------\n"<<std::endl;
-        std::cout<<"Setting Up the first game: "<<std::endl;
-        int obstacleCount = askNumberOfObstacles(dimensions);
-        std::cout<<"\nNumber of Obstacles suggested: "<<obstacleCount<<std::endl;
+        //std::cout<<"Setting Up the first game: "<<std::endl;
+        //int obstacleCount = askNumberOfObstacles(dimensions);
+        //std::cout<<"\nNumber of Obstacles suggested: "<<obstacleCount<<std::endl;
         // Initialize the Map
-        World wmap(dimensions, obstacleCount);
+        World wmap(dimensions);
+        /*
         // Play the first game
         gameEnd = playSingleAuto(wmap);
         std::cout<<"Time's Up!"<<std::endl;
         std::cout<<"Game Duration Ended"<<std::endl;
         if(!openThreads) std::cout<<"Attempt Successful!!"<<std::endl; else std::cout<<"Attempt Unsuccessful!!"<<std::endl;
         std::cout<<"\n -------------------------------------------------------------------\n"<<std::endl;
-        int i=1;
+        */
+        int i=0;
         do
         {
-            std::cout<<"*** New Game ***"<<std::endl;
+            std::cout<<"***Setting up a New Game ***"<<std::endl;
             // Reset game parameters for next game
             int obstacleCount = askNumberOfObstacles(wmap.getWorldDimensions());
             std::cout<<"Number of Obstacles suggested: "<<obstacleCount<<std::endl;
@@ -202,15 +204,13 @@ bool Game:: playSingleAuto(World& wmap)
     //std::cout<<"In Play "<<std::endl;
     // Display the map on to the screen
     wmap.show();
-    bool robotinit = spawnRobots(wmap, 1, head);
+    bool robotinit = spawnRobots(wmap, 1);
     // Set the game time limits
     gameTimeLimit = determineGameTime(wmap.getWorldDimensions());
 
     if (robotinit)
     {
         // threads spawned successfully.
-        // Set the game status booleans
-
         // Now keep time and end the game after the designated time
         do{
             auto timeNow = std::chrono::high_resolution_clock::now();

@@ -174,14 +174,32 @@ void World::setLocationFlag(std::pair<int, int> location,bool information)
 }
 
 
-std::pair<int, int> World :: getStartLocation()
+std::pair<int, int> World :: getStartLocation(bool generateNewLocation)
 {
+    if (generateNewLocation)
+    {
+        char agentID = (worldMap[startingLocations[0].first][startingLocations[0].second]).content;
+        addToMap(startingLocations, '-');
+        std::vector<std::pair<int, int>> newLocation = generateCoordinates(distributionRange, 1);
+        startingLocations[0].first = newLocation[0].first;
+        startingLocations[0].second = newLocation[0].second;
+        addToMap(startingLocations, agentID);
+    }
+
     return startingLocations[0];
 }
 
 
-std::pair<int, int> World:: getStopLocation()
+std::pair<int, int> World:: getStopLocation(bool generateNewLocation)
 {
+    if (generateNewLocation)
+    {
+        addToMap(destinationLocation, '-');
+        std::vector<std::pair<int, int>> newLocation = generateCoordinates(distributionRange, 1);
+        destinationLocation[0].first = newLocation[0].first;
+        destinationLocation[0].second = newLocation[0].second;
+        addToMap(destinationLocation, '@');
+    }
     return destinationLocation[0];
 }
 

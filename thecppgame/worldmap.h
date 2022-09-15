@@ -69,8 +69,8 @@ class World : protected Game{
     std::pair<int,int> getLocationNext(std::pair<int, int> location);
     std::vector<std::pair<int, int>> getTraversibleNeighborList(std::pair<int, int> location, direction headDirection=East, bool clockwiseHeadRotation= true);
     std::vector<std::pair<int, int>> getNeighborList(std::pair<int, int> location, direction headDirection=East, bool clockwiseHeadRotation= true);
-    std::pair<int, int> getStartLocation();
-    std::pair<int, int> getStopLocation();
+    std::pair<int, int> getStartLocation(bool generateNewLocation=false);
+    std::pair<int, int> getStopLocation(bool generateNewLocation=false);
     // Setters
     void setMode();
     void setObstacleCount(int obstacleCount);
