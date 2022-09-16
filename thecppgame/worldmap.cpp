@@ -3,13 +3,14 @@
 #include <thread>
 #include <chrono>
 #include <random>
+#include <cstdlib>
 #include "worldmap.h"
 #include "robot.h"
 // Function Definitions
 World::World(std::pair<int, int> dimensions,int obstacleCount, int robotCount): Game{},
     worldMapDimensions{dimensions}, numberOfObstacles{obstacleCount}, numberOfRobots{robotCount}
 {
-    std::cout<<"Initialization"<<std::endl;
+    std::cout<<"Initializing the World!!"<<std::endl;
     // Map creation variables initialization
     // Determine the lowest dimension of the map to compute distributionRange
     distributionRange = worldMapDimensions.first < worldMapDimensions.second ? worldMapDimensions.first : worldMapDimensions.second;
@@ -179,6 +180,7 @@ std::pair<int, int> World :: getStartLocation(bool generateNewLocation)
     if (generateNewLocation)
     {
         char agentID = (worldMap[startingLocations[0].first][startingLocations[0].second]).content;
+        std::cout<<"ID :"<<agentID<<std::endl;
         addToMap(startingLocations, '-');
         std::vector<std::pair<int, int>> newLocation = generateCoordinates(distributionRange, 1);
         startingLocations[0].first = newLocation[0].first;
@@ -195,9 +197,15 @@ std::pair<int, int> World:: getStopLocation(bool generateNewLocation)
     if (generateNewLocation)
     {
         addToMap(destinationLocation, '-');
-        std::vector<std::pair<int, int>> newLocation = generateCoordinates(distributionRange, 1);
-        destinationLocation[0].first = newLocation[0].first;
-        destinationLocation[0].second = newLocation[0].second;
+        // Generate 20 feasible coordinates randomly from the map
+        std::vector<std::pair<int, int>> newLocation = generateCoordinates(distributionRange, 20);
+        // Amongst the coordinate list, pick a single coordinate randomly
+        std::srand((unsigned) std::time(NULL)); // provide a seed value
+        int offset = 0;
+        int range = 19; // same as (the number of elements - 1) in newLocation vector
+        int random_index = offset + (std::rand() % range); // generate the index for random selection from list
+        destinationLocation[0].first = newLocation[random_index].first;
+        destinationLocation[0].second = newLocation[random_index].second;
         addToMap(destinationLocation, '@');
     }
     return destinationLocation[0];

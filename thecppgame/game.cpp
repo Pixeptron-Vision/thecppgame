@@ -31,19 +31,8 @@ bool Game:: run()
         int iterations = askNumberOfIterations();
         std::cout<<"Number of games suggested: "<<iterations<<"\n"<<std::endl;
         std::cout<<"\n -------------------------------------------------------------------\n"<<std::endl;
-        //std::cout<<"Setting Up the first game: "<<std::endl;
-        //int obstacleCount = askNumberOfObstacles(dimensions);
-        //std::cout<<"\nNumber of Obstacles suggested: "<<obstacleCount<<std::endl;
-        // Initialize the Map
         World wmap(dimensions);
-        /*
-        // Play the first game
-        gameEnd = playSingleAuto(wmap);
-        std::cout<<"Time's Up!"<<std::endl;
-        std::cout<<"Game Duration Ended"<<std::endl;
-        if(!openThreads) std::cout<<"Attempt Successful!!"<<std::endl; else std::cout<<"Attempt Unsuccessful!!"<<std::endl;
-        std::cout<<"\n -------------------------------------------------------------------\n"<<std::endl;
-        */
+
         int i=0;
         do
         {
@@ -146,10 +135,11 @@ bool Game::spawnRobots(World wmap, int numberOfRobots, direction head, float rob
 {
     // Init Robot Parameters
     std::pair<int, int> startPosition = wmap.getStartLocation();
-    std::pair<int, int> stopPosition = wmap.getStopLocation();
+    std::pair<int, int> stopPosition = wmap.getStopLocation(true);
     bool motionDirection= true;
     mode opMode = single_auto;
-
+    // Display the map on to the screen
+    wmap.show();
     // Init operation status variable
     bool success {true};
 
@@ -202,8 +192,6 @@ bool Game:: playSingleAuto(World& wmap)
     // Spawn a robot thread
     // initialize the robot params in this mode
     //std::cout<<"In Play "<<std::endl;
-    // Display the map on to the screen
-    wmap.show();
     bool robotinit = spawnRobots(wmap, 1);
     // Set the game time limits
     gameTimeLimit = determineGameTime(wmap.getWorldDimensions());
