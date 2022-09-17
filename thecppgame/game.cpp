@@ -42,27 +42,75 @@ bool Game:: run()
             std::cout<<"Number of Obstacles suggested: "<<obstacleCount<<std::endl;
             wmap.setObstacleCount(obstacleCount);
             wmap.resetObstacleLocations();
-
+            wmap.resetCollectibleLocations();
+            wmap.resetHoleLocations();
             // remember the start time of the game
             gameStartTime =  std::chrono::high_resolution_clock::now();
             // Play the game
             gameEnd = playSingleAuto(wmap);
             std::cout<<"Time's Up!"<<std::endl;
             std::cout<<"Game Duration Ended"<<std::endl;
-            if(!openThreads) std::cout<<"Attempt Successful!!"<<std::endl; else std::cout<<"Attempt Unsuccessful!!"<<std::endl;
+            if(!openThreads) std::cout<<"Attempt Successful!!"<<std::endl; else std::cout<<"Attempt Unsuccessful!! No path found!"<<std::endl;
             std::cout<<"\n -------------------------------------------------------------------\n"<<std::endl;
             // increment the game count
             i++;
 
         }while(i < iterations);
 
+        break;
+
     }
   case single_manual:
     {
-        startGame = true;
-        quitGame = false;
-        pauseGame = false;
-        resumeGame = false;
+
+        int iterations = askNumberOfIterations();
+        std::cout<<"Number of games suggested: "<<iterations<<"\n"<<std::endl;
+        std::cout<<"\n -------------------------------------------------------------------\n"<<std::endl;
+        World wmap(dimensions);
+
+        int i=0;
+        do
+        {
+            std::cout<<"***Setting up a New Game ***"<<std::endl;
+            // Reset game parameters for next game
+            startGame = true; // Not used yet
+            pauseGame = false; // Not used yet
+            resumeGame = false;// Not used yet
+            gameEnd = false; // Used to denote that robot agent has reached its destination
+            quitGame = false; // Used to denote that game duration has ended and game must be shut down
+            int obstacleCount = askNumberOfObstacles(wmap.getWorldDimensions());
+            std::cout<<"Number of Obstacles suggested: "<<obstacleCount<<std::endl;
+            wmap.setObstacleCount(obstacleCount);
+            wmap.resetObstacleLocations();
+            wmap.resetCollectibleLocations();
+            wmap.resetHoleLocations();
+            // remember the start time of the game
+            gameStartTime =  std::chrono::high_resolution_clock::now();
+            // Play the game
+            quitGame = playSingleManual(wmap);
+            std::cout<<"Time's Up!"<<std::endl;
+            std::cout<<"Game Duration Ended"<<std::endl;
+            if(gameEnd)
+            {
+                std::cout<<"Attempt Successful!!"<<std::endl;
+            }
+            else
+            {
+                std::cout<<"Attempt Unsuccessful!! No path found!"<<std::endl;
+            }
+
+            if(openThreads)
+            {
+                std::cout<<"Waiting for user input (any digit) for the game to be closed!!"<<std::endl;
+                std::this_thread::sleep_for(std::chrono::milliseconds(7000));
+                std::cout<<"Closing the Game!!"<<std::endl;
+
+            }
+            std::cout<<"\n -------------------------------------------------------------------\n"<<std::endl;
+            // increment the game count
+            i++;
+
+        }while(i < iterations);
         break;
     }
   case multiple_auto:
@@ -90,12 +138,13 @@ bool Game:: timeOut()
     }
     else
     {
+        std::cout<<"Time Out!! Game Up!\n";
         return true;
     }
 }
 
 
-void Game::runRobot(Robot agent, World wmap)
+void Game::runRobotAuto(Robot agent, World wmap)
 {
     // Robot agent's operation thread.
     // Each robot agent follows the next sequence of instructions
@@ -113,12 +162,15 @@ void Game::runRobot(Robot agent, World wmap)
             wmap.setLocationTrail(*it, '_');
         }
         std::cout<<"|\n";
+        wmap.setLocationTrail(wmap.getStartLocation(), 'a');
+        wmap.setLocationTrail(wmap.getStopLocation(), '@');
         timeUp = timeOut();
 
     }while(!(timeUp || gameEnd));
     std::cout<<"Robot Life Left: "<<agent.life<<std::endl;
     std::cout<<"Map with Robot Path: "<<std::endl;
     wmap.show(4);
+
     /*
     wmap.show(1);
     std::cout<<"Previous"<<std::endl;
@@ -127,6 +179,7 @@ void Game::runRobot(Robot agent, World wmap)
     wmap.show(3);
     */
     std::cout<<"Robot Operation Ended!"<<std::endl;
+    std::cout<<"Waiting for Game time to finish!"<<std::endl;
     openThreads = false;
 }
 
@@ -136,6 +189,7 @@ bool Game::spawnRobots(World wmap, int numberOfRobots, direction head, float rob
     // Init Robot Parameters
     std::pair<int, int> startPosition = wmap.getStartLocation();
     std::pair<int, int> stopPosition = wmap.getStopLocation(true);
+    std::cout<<"Start --> Stop : ("<<startPosition.first<<", "<<startPosition.second<<") --> ("<<stopPosition.first<<", "<<stopPosition.second<<")"<<std::endl;
     bool motionDirection= true;
     mode opMode = single_auto;
     // Display the map on to the screen
@@ -150,14 +204,38 @@ bool Game::spawnRobots(World wmap, int numberOfRobots, direction head, float rob
             {
                 // Create a robot object
                 Robot agent(startPosition, stopPosition, head, motionDirection, opMode, robotTimeUnit); // Initiialize robot with appropriate parameters
-                // Evoke a thread for the robot object
-                std::thread t1(&Game::runRobot, this, agent, wmap);
-                // std::this_thread :: sleep_for(std::chrono::milliseconds(1000));
-                thread_guard safe_thread(t1);
-                t1.detach();
-                openThreads = true;
-                //std::cout<<"Thread "<<i<<" Detached!"<<std::endl;
+                switch (currentMode)
+                {
+                case single_auto:
+                    {
+                        // Evoke a thread for the robot object
+                        std::thread t1(&Game::runRobotAuto, this, agent, wmap);
+                        // std::this_thread :: sleep_for(std::chrono::milliseconds(1000));
+                        thread_guard safe_thread(t1);
+                        t1.detach();
+                        openThreads = true;
+                        //std::cout<<"Thread "<<i<<" Detached!"<<std::endl;
+                        break;
+                    }
+                case single_manual:
+                    {
+                        // Evoke a thread for the robot object
+                        std::thread t1(&Game::runRobotManual, this, agent, wmap);
+                        // std::this_thread :: sleep_for(std::chrono::milliseconds(1000));
+                        thread_guard safe_thread(t1);
+                        t1.detach();
+                        openThreads = true;
+                        //std::cout<<"Thread "<<i<<" Detached!"<<std::endl;
+                        break;
+                    }
+                case multiple_auto:
+                    {
+                        // Nothing for now
+                    }
+
+                }
             }
+
     }
     catch (int &ex)
     {
@@ -173,8 +251,28 @@ bool Game::spawnRobots(World wmap, int numberOfRobots, direction head, float rob
 std::chrono::milliseconds Game:: determineGameTime(std::pair<int, int> dimensions, float robotTimeUnit, float agilityFactor)
 {
     //float shortestPathFactor = (std::sqrt(dimensions.first * dimensions.first  + dimensions.second * dimensions.second )/ (dimensions.first * dimensions.second));
-    float shortestPathFactor = (std::sqrt(dimensions.first * dimensions.first  + dimensions.second * dimensions.second ) );
-    float totalTime = shortestPathFactor * agilityFactor * robotTimeUnit;
+    float shortestPathFactor, totalTime;
+    switch(currentMode)
+    {
+    case single_auto:
+        {
+            shortestPathFactor = (std::sqrt(dimensions.first * dimensions.first  + dimensions.second * dimensions.second ) );
+            totalTime = shortestPathFactor * agilityFactor * robotTimeUnit;
+            break;
+        }
+    case single_manual:
+        {
+            shortestPathFactor = (std::sqrt(dimensions.first * dimensions.first  + dimensions.second * dimensions.second ) );
+            totalTime = shortestPathFactor * agilityFactor * robotTimeUnit;
+            totalTime *= 10;
+            break;
+        }
+    case multiple_auto:
+        {
+            break;
+        }
+    }
+
     //std::cout<<totalTime<<", "<<shortestPathFactor<<", "<<agilityFactor<<", "<<robotTimeUnit<<std::endl;
     // Convert float into chrono milliseconds
     std::chrono::milliseconds totalTimeMS{static_cast<long int>(totalTime)}; // Create a chrono ms object
@@ -212,8 +310,31 @@ bool Game:: playSingleAuto(World& wmap)
 }
 
 
-bool playSingleManual()
+bool Game::playSingleManual(World& wmap)
 {
+    //direction head = askHeadDirection();
+    // remember the start time of the game
+    gameStartTime =  std::chrono::high_resolution_clock::now();
+
+    // Spawn a robot thread
+    // initialize the robot params in this mode
+    //std::cout<<"In Play "<<std::endl;
+    bool robotinit = spawnRobots(wmap, 1);
+    // Set the game time limits
+    gameTimeLimit = determineGameTime(wmap.getWorldDimensions());
+
+    if (robotinit)
+    {
+        // threads spawned successfully.
+        // Now keep time and end the game after the designated time
+        do{
+            auto timeNow = std::chrono::high_resolution_clock::now();
+            gameTimeDuration = std::chrono::duration_cast<std::chrono::milliseconds>( gameStartTime - timeNow);
+            //std::cout<<"Main: "<<gameTimeDuration.count()<<"  /  "<<gameTimeLimit.count()<<std::endl;
+
+        }while(-gameTimeDuration.count() < gameTimeLimit.count());
+    }
+
     return true;
 }
 
@@ -223,3 +344,57 @@ bool playMultipleAuto()
     return true;
 }
 
+void Game::runRobotManual(Robot agent, World wmap)
+{
+    // Robot agent's operation thread.
+    // Each robot agent follows the next sequence of instructions
+    bool timeUp;
+    char content;
+    wmap.setLocationTrail(wmap.getStartLocation(), 'a');
+    wmap.setLocationTrail(wmap.getStopLocation(), '@');
+    std::vector<std::pair<int, int>> path;
+    std::pair<int, int> nextStep;
+    do{
+
+
+        // Take input from the user
+        std::pair<int, int> location = agent.getCurrentLocation();
+        std::cout<<"Current Location: ("<<location.first<<", "<<location.second<<")"<<std::endl;
+        nextStep = askUserForNextStep(wmap, location);
+        content = wmap.getLocationContent(nextStep);
+        if (content== '@')
+        {
+            gameEnd = true;
+            break;
+        }
+        else if(content == '+')
+        {
+            agent.life += 1;
+        }
+        else if (content == 'O')
+        {
+            agent.life -= 1;
+        }
+        wmap.setLocationContent(nextStep, '~');
+        wmap.setLocationTrail(nextStep, '~');
+        agent.setCurrentLocation(nextStep);
+        wmap.show();
+        timeUp = timeOut();
+
+    }while(!((timeUp || gameEnd || quitGame)|| agent.life == 0));
+    std::cout<<"Status: Time Up - "<<timeUp<<"; Game End Signal - "<<gameEnd<<std::endl;
+    std::cout<<"Robot Life Left: "<<agent.life<<std::endl;
+    std::cout<<"Map with Robot Path: "<<std::endl;
+    wmap.show(4);
+
+
+    /*
+    wmap.show(1);
+    std::cout<<"Previous"<<std::endl;
+    wmap.show(2);
+    std::cout<<"Next"<<std::endl;
+    wmap.show(3);
+    */
+    std::cout<<"Robot Operation Ended!"<<std::endl;
+    openThreads = false;
+}

@@ -29,4 +29,5 @@ int askNumberOfIterations();
 mode askMode();
 void displayList(std::vector<std::pair<int, int>> locationList);
 direction askHeadDirection();
+std::pair<int, int> askUserForNextStep(World & wmap, std::pair<int, int> currentLocation);
 #endif

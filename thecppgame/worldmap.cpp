@@ -96,7 +96,7 @@ void World::createMap()
     generateObstacleLocations();
 
     // Add obstacles to the map
-    addToMap(obstacleLocations,'X');
+    addToMap(obstacleLocations,'X',true);
 
     // Add collectibles to the map
     numberOfCollectibles = int(numberOfObstacles * 0.15);
@@ -133,11 +133,13 @@ void World::createMap()
 }
 
 
-void World:: addToMap(std::vector<std::pair<int, int>> coordinateList, char symbol)
+void World:: addToMap(std::vector<std::pair<int, int>> coordinateList, char symbol, bool includeTrailMap)
 {
     for (auto location: coordinateList)
     {
+        //std::cout<<"("<<location.first<<", "<<location.second<<") : "<<symbol<<std::endl;
         (worldMap[location.first][location.second]).content = symbol;
+        if (includeTrailMap) (worldMap[location.first][location.second]).trail = symbol;
     }
 
 }
@@ -180,18 +182,26 @@ std::pair<int, int> World :: getStartLocation(bool generateNewLocation)
     if (generateNewLocation)
     {
         char agentID = (worldMap[startingLocations[0].first][startingLocations[0].second]).content;
-        std::cout<<"ID :"<<agentID<<std::endl;
+        //std::cout<<"Robot Agent ID :"<<agentID<<std::endl;
         addToMap(startingLocations, '-');
         // Generate 20 feasible coordinates randomly from the map
-        std::vector<std::pair<int, int>> newLocation = generateCoordinates(distributionRange, 20);
+        std::vector<std::pair<int, int>> newLocation = generateCoordinates(distributionRange, distributionRange);
         // Amongst the coordinate list, pick a single coordinate randomly
         std::srand((unsigned) std::time(NULL)); // provide a seed value
-        int offset = 0;
-        int range = 19; // same as (the number of elements - 1) in newLocation vector
-        int random_index = offset + (std::rand() % range); // generate the index for random selection from list
+        int offset = distributionRange/2; // offset changed in comparison to the one for stop location to generate distinct locations
+        int range = distributionRange - 1; // same as (the number of elements - 1) in newLocation vector
+        int random_index;
+        do{
+            random_index = offset + (std::rand() % range); // generate the index for random selection from list
+            //std::cout<<"Start: "<<newLocation.size()<<", "<<random_index<<std::endl;
+        }while(newLocation[random_index].first ==0 || newLocation[random_index].second ==0 || random_index >= newLocation.size());
         startingLocations[0].first = newLocation[random_index].first;
         startingLocations[0].second = newLocation[random_index].second;
+        std::cout<<"Location ID Before :"<<(worldMap[startingLocations[0].first][startingLocations[0].second]).content;
+        std::cout<<", Location: ("<<startingLocations[0].first<<","<<startingLocations[0].second<<")";
         addToMap(startingLocations, agentID);
+        std::cout<<", Location ID After:"<<(worldMap[startingLocations[0].first][startingLocations[0].second]).content<<std::endl;
+
     }
 
     return startingLocations[0];
@@ -204,12 +214,16 @@ std::pair<int, int> World:: getStopLocation(bool generateNewLocation)
     {
         addToMap(destinationLocation, '-');
         // Generate 20 feasible coordinates randomly from the map
-        std::vector<std::pair<int, int>> newLocation = generateCoordinates(distributionRange, 20);
+        std::vector<std::pair<int, int>> newLocation = generateCoordinates(distributionRange, distributionRange);
         // Amongst the coordinate list, pick a single coordinate randomly
         std::srand((unsigned) std::time(NULL)); // provide a seed value
         int offset = 0;
-        int range = 19; // same as (the number of elements - 1) in newLocation vector
-        int random_index = offset + (std::rand() % range); // generate the index for random selection from list
+        int range = distributionRange - 1; // same as (the number of elements - 1) in newLocation vector
+        int random_index;
+        do{
+            random_index = offset + (std::rand() % range); // generate the index for random selection from list
+            //std::cout<<"Stop: "<<newLocation.size()<<", "<<random_index<<std::endl;
+        }while(newLocation[random_index].first ==0 || newLocation[random_index].second ==0 || random_index >= newLocation.size());
         destinationLocation[0].first = newLocation[random_index].first;
         destinationLocation[0].second = newLocation[random_index].second;
         addToMap(destinationLocation, '@');
@@ -456,11 +470,11 @@ void World::resetHoleLocations()
 void World::resetObstacleLocations()
 {
     // Clear obstacle Locations
-    addToMap(obstacleLocations, '-');
+    addToMap(obstacleLocations, '-',true);
     // Generate new set of obstacles as per the updated obstacle count
     generateObstacleLocations();
     // Add the generated obstacles to the map
-    addToMap(obstacleLocations, 'X');
+    addToMap(obstacleLocations, 'X',true);
     // Make sure that holes don't replace start and end points
     addToMap(destinationLocation, '@');
     addToMap(startingLocations, 'a');

@@ -1,8 +1,12 @@
 #include <iostream>
 #include <thread>
 #include "utils.h"
+#include "worldmap.h"
 #include "game.h"
 #include "utility"
+// C libraries to control console input
+#include <unistd.h>
+#include <cstdlib>
 
 std::pair<int, int> askMapDimensions()
 {
@@ -46,11 +50,12 @@ int askNumberOfObstacles(std::pair<int, int> mapDimensions)
 {
     int obstacleCount = 0;
     bool validObstacleCountReceived = false;
+    int obstacleLimit = mapDimensions.first * mapDimensions.second * 0.3;
     do {
         std::cout<<"Enter the number of obstacles in the  map >>\n";
-        std::cout<<"Note: 0 < Max. obstacles < "<<mapDimensions.first * mapDimensions.second<<std::endl;
+        std::cout<<"Note: 0 < Max. obstacles <= "<<obstacleLimit<<std::endl;
         std::cin>>obstacleCount;
-        if(obstacleCount > 0 && obstacleCount < mapDimensions.first * mapDimensions.second)
+        if(obstacleCount > 0 && obstacleCount <= obstacleLimit)
         {
             validObstacleCountReceived = true;
         }
@@ -145,23 +150,23 @@ direction askHeadDirection()
 {
     int headDirection;
     std::cout<<"Enter Robot Head Direction (Default: North) "<<std::endl;
-    std::cout<<"Enter: 0 for E, 1 for NE, 2 for N, 3 for NW, 4 for W, 5 for SW, 6 for S, 7 for SE >>"<<std::endl;
+    std::cout<<"Enter: 6 for E, 9 for NE, 8 for N, 7 for NW, 4 for W, 1 for SW, 2 for S, 3 for SE >>"<<std::endl;
     std::cin>>headDirection;
     switch(headDirection)
     {
-    case 0:
+    case 6:
         {
             return East;
         }
-    case 1:
+    case 9:
         {
             return NorthEast;
         }
-    case 2:
+    case 8:
         {
             return North;
         }
-    case 3:
+    case 7:
         {
             return NorthWest;
         }
@@ -169,15 +174,15 @@ direction askHeadDirection()
         {
             return West;
         }
-    case 5:
+    case 1:
         {
             return SouthWest;
         }
-    case 6:
+    case 2:
         {
             return South;
         }
-    case 7:
+    case 3:
         {
             return SouthEast;
         }
@@ -188,3 +193,103 @@ direction askHeadDirection()
     }
 
 }
+
+
+std::pair<int, int> askUserForNextStep(World & wmap, std::pair<int, int> currentLocation)
+{
+
+    int xCoordinate = currentLocation.first;
+    int yCoordinate = currentLocation.second;
+    char content;
+    do
+    {
+        direction input = askHeadDirection();
+        if (input == East)
+        {
+            yCoordinate +=1;
+        }
+        else if(input == SouthEast)
+        {
+            xCoordinate +=1;
+            yCoordinate +=1;
+        }
+        else if(input == South)
+        {
+            xCoordinate +=1;
+        }
+        else if(input == SouthWest)
+        {
+            xCoordinate +=1;
+            yCoordinate -=1;
+        }
+        else if(input == West)
+        {
+            yCoordinate -=1;
+        }
+        else if(input == NorthWest)
+        {
+            xCoordinate -=1;
+            yCoordinate -=1;
+        }
+        else if(input == North)
+        {
+            xCoordinate -=1;
+        }
+        else if(input == NorthEast)
+        {
+            xCoordinate -=1;
+            yCoordinate +=1;
+        }
+
+        content = wmap.getLocationContent(std::make_pair(xCoordinate, yCoordinate));
+        switch(content)
+        {
+        case 'X':
+            {
+                std::cout<<"Oh No!! You've hit an obstacle! Change the direction!!\n";
+                xCoordinate = currentLocation.first;
+                yCoordinate = currentLocation.second;
+                break;
+            }
+        case 'O':
+            {
+                std::cout<<"Oops! You've hit a hole!!\n";
+                break;
+            }
+        case '+':
+            {
+                std::cout<<"Wow! You've hit a bonus!\n";
+                break;
+            }
+        case '*':
+            {
+                std::cout<<"Oh No!! You've hit the boundary! Change the direction!!\n";
+                xCoordinate = currentLocation.first;
+                yCoordinate = currentLocation.second;
+                break;
+            }
+        }
+
+    }while(content == 'X' || content == '*');
+    return std::make_pair(xCoordinate, yCoordinate);
+}
+
+
+/*
+    // Initialization
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(STDIN_FILENO, &readfds);
+    fd_set savefds = readfds;
+    // Time out initialization
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+
+    if (select(1, &readfds, NULL, NULL, &timeout))
+        {
+            std::cin>>headDirection;
+            send(headDirection);
+        }
+    readfds = savefds;
+*/

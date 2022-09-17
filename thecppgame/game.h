@@ -46,7 +46,8 @@ class Game{
     bool run(); // function to start the game
     std::chrono::milliseconds determineGameTime(std::pair<int, int> dimensions, float robotTimeUnit=250, float agilityFactor=1.1);
     bool spawnRobots(World wmap, int numberOfRobots=1,direction head = North, float robotTimeUnit=250 );
-    void runRobot(Robot agent, World wmap);
+    void runRobotAuto(Robot agent, World wmap);
+    void runRobotManual(Robot agent, World wmap);
     bool timeOut();
     bool stop(); // not in use yet
     bool pause(); // not in use yet

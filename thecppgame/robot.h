@@ -34,6 +34,8 @@ class Robot: protected Game {
     void run(); //Works on a robot thread instance
     bool nextMove(); // works both for auto and manual mode
     void setStartingLocation(std::pair<int, int> coordinate); // used in manual mode
+    void setCurrentLocation(std::pair<int, int> coordinate); // used in manual mode
+    std::pair<int, int> getCurrentLocation(); // used in manual mode
     bool flipDirection(); // used in manual & auto modes
     std::vector<std::pair<int, int>> shortestPathBFS(World& wmap);
     float getRobotTimeUnit();

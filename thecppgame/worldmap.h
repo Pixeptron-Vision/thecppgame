@@ -39,7 +39,7 @@ class World : protected Game{
     void createMap();
     void generateObstacleLocations();
     std::vector<std::pair<int, int>> generateCoordinates(int distributionRange, int numberOfCoordinates);
-    void addToMap(std::vector<std::pair<int, int>> coordinateList, char symbol);
+    void addToMap(std::vector<std::pair<int, int>> coordinateList, char symbol, bool includeTrailMap=false);
     // Robot Movement Methods
     bool isValidMove(std::pair<int, int> nextPosition);
 

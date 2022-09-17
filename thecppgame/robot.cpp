@@ -122,3 +122,23 @@ std::vector<std::pair<int, int>> Robot:: shortestPathBFS(World& wmap)
 
 
 }
+
+
+void Robot:: setStartingLocation(std::pair<int, int> coordinate)
+{
+    startLocation.first = coordinate.first;
+    startLocation.second = coordinate.second;
+}
+
+
+void Robot::setCurrentLocation(std::pair<int, int> coordinate)
+{
+    currentLocation.first = coordinate.first;
+    currentLocation.second = coordinate.second;
+}
+
+
+std::pair<int, int> Robot:: getCurrentLocation()
+{
+    return currentLocation;
+}
