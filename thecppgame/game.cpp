@@ -23,10 +23,6 @@ bool Game:: run()
   {
   case single_auto:
     {
-        startGame = true;
-        quitGame = false;
-        pauseGame = false;
-        resumeGame = false;
 
         int iterations = askNumberOfIterations();
         std::cout<<"Number of games suggested: "<<iterations<<"\n"<<std::endl;
@@ -38,6 +34,12 @@ bool Game:: run()
         {
             std::cout<<"***Setting up a New Game ***"<<std::endl;
             // Reset game parameters for next game
+            // Reset game parameters for next game
+            startGame = true; // Not used yet
+            pauseGame = false; // Not used yet
+            resumeGame = false;// Not used yet
+            gameEnd = false; // Used to denote that robot agent has reached its destination
+            quitGame = false; // Used to denote that game duration has ended and game must be shut down
             int obstacleCount = askNumberOfObstacles(wmap.getWorldDimensions());
             std::cout<<"Number of Obstacles suggested: "<<obstacleCount<<std::endl;
             wmap.setObstacleCount(obstacleCount);
@@ -77,7 +79,7 @@ bool Game:: run()
             pauseGame = false; // Not used yet
             resumeGame = false;// Not used yet
             gameEnd = false; // Used to denote that robot agent has reached its destination
-            quitGame = false; // Used to denote that game duration has ended and game must be shut down
+            quitGame = false; // Not used yet
             int obstacleCount = askNumberOfObstacles(wmap.getWorldDimensions());
             std::cout<<"Number of Obstacles suggested: "<<obstacleCount<<std::endl;
             wmap.setObstacleCount(obstacleCount);

@@ -149,8 +149,11 @@ void displayList(std::vector<std::pair<int, int>> locationList)
 direction askHeadDirection()
 {
     int headDirection;
-    std::cout<<"Enter Robot Head Direction (Default: North) "<<std::endl;
-    std::cout<<"Enter: 6 for E, 9 for NE, 8 for N, 7 for NW, 4 for W, 1 for SW, 2 for S, 3 for SE >>"<<std::endl;
+    std::cout<<"Enter Direction of Robot's next step (Default = Up): "<<std::endl;
+    std::cout<<"** Top Left    =  7 ,  Up    =  8  ,  Top Right    =  9 **\n";
+    std::cout<<"** Left  <--   =  4 ,                 Right   -->  =  6 **\n";
+    std::cout<<"** Bottom Left =  1 ,  Down  =  2  ,  Bottom Right =  3 **\n>>";
+    //std::cout<<"Enter: 6 for E, 9 for NE, 8 for N, 7 for NW, 4 for W, 1 for SW, 2 for S, 3 for SE >>"<<std::endl;
     std::cin>>headDirection;
     switch(headDirection)
     {
