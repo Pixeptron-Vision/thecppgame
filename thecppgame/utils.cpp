@@ -16,9 +16,9 @@ std::pair<int, int> askMapDimensions()
     bool breadthReceived = false;
     // Take length input from user
     do{
-        std::cout<<"Enter the Map Length dimension >>\nNote: The Map Length must be an integer < 16 \n"<<std::endl;
+        std::cout<<"Enter the Map Length dimension >>\nNote: 8<= The Map Length <= 15 \n"<<std::endl;
         std::cin>>length;
-        if(length > 0 && length <= 15 )
+        if(length > 7 && length <= 15 )
         {
             lengthReceived = true;
         }
@@ -29,9 +29,9 @@ std::pair<int, int> askMapDimensions()
     }while(!lengthReceived);
     // Take breadth input from user
     do{
-        std::cout<<"Enter the Map Breadth dimension >>\nNote: The Map Breadth must be an integer < 16 \n"<<std::endl;
+        std::cout<<"Enter the Map Breadth dimension >>\nNote: 8<= The Map Breadth <= 15 \n"<<std::endl;
         std::cin>>breadth;
-        if(breadth > 0 && breadth <= 15 )
+        if(breadth > 7 && breadth <= 15 )
         {
             breadthReceived = true;
         }
@@ -100,8 +100,10 @@ mode askMode()
     mode gameMode;
     bool validModeSelection = false;
     do {
-        std::cout<<"Enter the number of Game Mode\n  Single Player Auto - Press 0  \n  Single Player Manual - Press 5 \n";
-        std::cout<<"  Multi Agent Auto - Press 3\n";
+        std::cout<<"Select the Game Mode by entering appropriate number\n";
+        std::cout<<"*********  Single Player Auto   - Enter 0 *********\n";
+        std::cout<<"*********  Single Player Manual - Enter 5 *********\n";
+        std::cout<<"*********  Multi Agent Auto     - Enter 3 *********\n";
         std::cin>> modeInput;
         switch(modeInput)
         {
@@ -152,7 +154,8 @@ direction askHeadDirection()
     std::cout<<"Enter Direction of Robot's next step (Default = Up): "<<std::endl;
     std::cout<<"** Top Left    =  7 ,  Up    =  8  ,  Top Right    =  9 **\n";
     std::cout<<"** Left  <--   =  4 ,                 Right   -->  =  6 **\n";
-    std::cout<<"** Bottom Left =  1 ,  Down  =  2  ,  Bottom Right =  3 **\n>>";
+    std::cout<<"** Bottom Left =  1 ,  Down  =  2  ,  Bottom Right =  3 **\n";
+    std::cout<<"** ------------------  Quit  =  0 --------------------- **\n>>";
     //std::cout<<"Enter: 6 for E, 9 for NE, 8 for N, 7 for NW, 4 for W, 1 for SW, 2 for S, 3 for SE >>"<<std::endl;
     std::cin>>headDirection;
     switch(headDirection)
@@ -188,6 +191,10 @@ direction askHeadDirection()
     case 3:
         {
             return SouthEast;
+        }
+    case 0:
+        {
+            return NoWhere;
         }
     default:
         {
@@ -243,6 +250,10 @@ std::pair<int, int> askUserForNextStep(World & wmap, std::pair<int, int> current
             xCoordinate -=1;
             yCoordinate +=1;
         }
+        else if(input == NoWhere)
+        {
+            return std::make_pair(-1,-1);
+        }
 
         content = wmap.getLocationContent(std::make_pair(xCoordinate, yCoordinate));
         switch(content)
@@ -277,22 +288,48 @@ std::pair<int, int> askUserForNextStep(World & wmap, std::pair<int, int> current
     return std::make_pair(xCoordinate, yCoordinate);
 }
 
-
-/*
-    // Initialization
-    fd_set readfds;
-    FD_ZERO(&readfds);
-    FD_SET(STDIN_FILENO, &readfds);
-    fd_set savefds = readfds;
-    // Time out initialization
-    struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 0;
-
-    if (select(1, &readfds, NULL, NULL, &timeout))
+float askGameTime()
+{
+    int numberOfSeconds = 0;
+    bool validateTimeReceived = false;
+    do {
+        std::cout<<"Enter the number of seconds game is supposed to last >>\n";
+        std::cout<<"Note: Min. time = 5 seconds"<<std::endl;
+        std::cin>>numberOfSeconds;
+        if(numberOfSeconds > 0 )
         {
-            std::cin>>headDirection;
-            send(headDirection);
+            validateTimeReceived = true;
         }
-    readfds = savefds;
-*/
+        else
+        {
+            std::cout<<"Wrong number received for the game time: "<<numberOfSeconds<<std::endl;
+        }
+    }while(!validateTimeReceived);
+
+
+    return numberOfSeconds;
+}
+
+
+int askNumberOfRobots()
+{
+    int numberOfRobots = 0;
+    bool validRobotCountReceived = false;
+    do {
+        std::cout<<"Enter the number of Robots in the game >>\n";
+        std::cout<<"Note: 0 < Number of Robots < Map Length"<<std::endl;
+        std::cin>>numberOfRobots;
+        if(numberOfRobots > 0 )
+        {
+            validRobotCountReceived = true;
+        }
+        else
+        {
+            std::cout<<"Wrong number received for the number of Robots: "<<numberOfRobots<<std::endl;
+        }
+    }while(!validRobotCountReceived );
+
+
+    return numberOfRobots;
+
+}

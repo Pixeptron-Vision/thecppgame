@@ -5,20 +5,18 @@
 class World; //Forward Declaration
 class Robot: protected Game {
  private:
-
+    // Variables
     std::pair<int, int> startLocation; //default {1,1}
     std::pair<int, int> stopLocation; // init by map dimension
     direction head; //default North
+    float robotTimeUnit; // default 250
     bool movesClockwise; //default true
     mode operationMode; //default single_auto
     bool isStuck; // default false
     std::pair<int, int> currentLocation; // default {1,1}
     std::vector<std::pair<int, int>> trail;
     static int numberOfRobots; // default - 1
-    float robotTimeUnit; // default 250
     std::chrono::time_point< std::chrono::high_resolution_clock> startTime;
-    // Methods
-    std::pair<int, int> autoNextMove();
 
  public:
     // Constructors
@@ -27,21 +25,24 @@ class Robot: protected Game {
     // Destructor
     ~Robot();
     int life;
+    char ID;
 
     // Helper Functions
+    std::pair<int, int> determineNextStep(); // used in multiple auto mode
+    bool validateLocation(char content);
+    void changeHeadDirection();
+    void changeHeadRotation(); // used in manual & auto modes
+    std::vector<std::pair<int, int>> shortestPathBFS(World& wmap); // used in single auto mode
 
-    //friend bool addRobot(std::pair<int, int> startPosition, direction head, bool motion, bool mode, bool status);
-    void run(); //Works on a robot thread instance
-    bool nextMove(); // works both for auto and manual mode
+    // Getter Functions
+    std::pair<int, int> getCurrentLocation(); // used in manual mode
+    float getRobotTimeUnit();
+    direction getHeadDirection();
+
+    // Setter Functions
     void setStartingLocation(std::pair<int, int> coordinate); // used in manual mode
     void setCurrentLocation(std::pair<int, int> coordinate); // used in manual mode
-    std::pair<int, int> getCurrentLocation(); // used in manual mode
-    bool flipDirection(); // used in manual & auto modes
-    std::vector<std::pair<int, int>> shortestPathBFS(World& wmap);
-    float getRobotTimeUnit();
     void setRobotTimeUnit(float robotTime);
-    direction getHeadDirection();
-    //friend bool World::isValidMove(std::pair<int, int> nextPosition);
 
 };
 

@@ -23,6 +23,7 @@ public :
 	thread_guard & operator= (thread_guard & ) = delete;
 };
 
+// Methods
 std::pair<int, int> askMapDimensions();
 int askNumberOfObstacles(std::pair<int, int> mapDimensions);
 int askNumberOfIterations();
@@ -30,4 +31,6 @@ mode askMode();
 void displayList(std::vector<std::pair<int, int>> locationList);
 direction askHeadDirection();
 std::pair<int, int> askUserForNextStep(World & wmap, std::pair<int, int> currentLocation);
+float askGameTime();
+int askNumberOfRobots();
 #endif

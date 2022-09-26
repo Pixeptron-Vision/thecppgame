@@ -6,25 +6,57 @@
 #include "worldmap.h"
 #include "robot.h"
 
+/*
+   ---------------------------------------------------------------------------------------------------------------------
+   -------------------------------------------------%% Constructor Definitions %% --------------------------------------
+   ---------------------------------------------------------------------------------------------------------------------
+*/
+
 Robot:: Robot(std::pair<int, int> startPosition, std::pair<int, int> stopPosition, direction head, bool motionDirection, mode opMode, float robotTimeUnit): Game{},
     startLocation{startPosition}, stopLocation{stopPosition}, head{head}, robotTimeUnit{robotTimeUnit}, movesClockwise{motionDirection}, operationMode{opMode},
     isStuck{isStuck}, currentLocation{startPosition}
 {
-    // Init the start time
+    // Init the start time and set the key variables
     startTime = std::chrono::high_resolution_clock::now();
     life = 3;
+    ID = 'a';
 }
 
 
 Robot:: ~Robot(){}
 
+// Initialize the static variable
 int Robot:: numberOfRobots = 0;
 
+/*
+   ---------------------------------------------------------------------------------------------------------------------
+   -----------------------------------------------------%% Getter Methods %% -------------------------------------------
+   ---------------------------------------------------------------------------------------------------------------------
+*/
 
 float Robot:: getRobotTimeUnit()
 {
     return robotTimeUnit;
 }
+
+
+direction Robot::getHeadDirection()
+{
+    return head;
+}
+
+
+std::pair<int, int> Robot:: getCurrentLocation()
+{
+    return currentLocation;
+}
+
+
+/*
+   ---------------------------------------------------------------------------------------------------------------------
+   -----------------------------------------------------%% Setter Methods %% -------------------------------------------
+   ---------------------------------------------------------------------------------------------------------------------
+*/
 
 
 void Robot:: setRobotTimeUnit(float robotTime)
@@ -33,15 +65,17 @@ void Robot:: setRobotTimeUnit(float robotTime)
 }
 
 
-void Robot:: run()
+void Robot:: setStartingLocation(std::pair<int, int> coordinate)
 {
-
+    startLocation.first = coordinate.first;
+    startLocation.second = coordinate.second;
 }
 
 
-direction Robot::getHeadDirection()
+void Robot::setCurrentLocation(std::pair<int, int> coordinate)
 {
-    return head;
+    currentLocation.first = coordinate.first;
+    currentLocation.second = coordinate.second;
 }
 
 
@@ -124,21 +158,146 @@ std::vector<std::pair<int, int>> Robot:: shortestPathBFS(World& wmap)
 }
 
 
-void Robot:: setStartingLocation(std::pair<int, int> coordinate)
+std::pair<int, int> Robot:: determineNextStep()
 {
-    startLocation.first = coordinate.first;
-    startLocation.second = coordinate.second;
+    /* This function determines the next step for the robot to traverse
+       Input: None
+       Output: std::pair<int, int> nextLocation : Coordinate of the next location in the specified direction
+
+    // Directions Reference:
+    //
+    //      (135°)     (90°)    (45°)
+    //      NORTH-WEST NORTH  NORTH-EAST
+    //               \   |   /
+    //                \  |  /
+    //                 \ | /
+    //                  \|/
+    //    (180°)WEST --------- EAST (0°)
+    //                  /|\
+    //                 / | \
+    //                /  |  \
+    //               /   |   \
+    //     SOUTH-WEST  SOUTH  SOUTH-EAST
+    //      (225°)     (270°)   (315°)
+    */
+
+    // Initialize the next location
+    std::pair<int, int> nextLocation = std::make_pair(1,1);
+
+    // Set the next location based on robot direction
+    switch(head)
+    {
+    case East:
+        {
+            nextLocation.first = currentLocation.first;
+            nextLocation.second = currentLocation.second + 1;
+            break;
+        }
+    case NorthEast:
+        {
+            nextLocation.first = currentLocation.first - 1;
+            nextLocation.second = currentLocation.second + 1;
+            break;
+        }
+    case North:
+        {
+            nextLocation.first = currentLocation.first - 1;
+            nextLocation.second = currentLocation.second;
+            break;
+        }
+    case NorthWest:
+        {
+            nextLocation.first = currentLocation.first - 1;
+            nextLocation.second = currentLocation.second - 1;
+            break;
+        }
+    case West:
+        {
+            nextLocation.first = currentLocation.first;
+            nextLocation.second = currentLocation.second - 1;
+            break;
+        }
+    case SouthWest:
+        {
+            nextLocation.first = currentLocation.first + 1;
+            nextLocation.second = currentLocation.second - 1;
+            break;
+        }
+    case South:
+        {
+            nextLocation.first = currentLocation.first + 1;
+            nextLocation.second = currentLocation.second;
+            break;
+        }
+    case SouthEast:
+        {
+            nextLocation.first = currentLocation.first + 1;
+            nextLocation.second = currentLocation.second + 1;
+            break;
+        }
+    default:
+        {
+            // Default = North
+            nextLocation.first = currentLocation.first - 1;
+            nextLocation.second = currentLocation.second;
+            break;
+        }
+    }
+    //std::cout<<"Next Location: ("<<nextLocation.first<<", "<<nextLocation.second<<")"<<std::endl;
+    return nextLocation;
 }
 
 
-void Robot::setCurrentLocation(std::pair<int, int> coordinate)
+bool Robot::validateLocation(char content)
 {
-    currentLocation.first = coordinate.first;
-    currentLocation.second = coordinate.second;
+    /* Returns true if the location content is not 'X', an obstacle or any other robot ID (a,b,c, etc..)*/
+    if(content < 88 && content != 42)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
 }
 
 
-std::pair<int, int> Robot:: getCurrentLocation()
+void Robot::changeHeadDirection()
 {
-    return currentLocation;
+    /*Changes the head direction of the robot agent based on the orientation setting of the robot*/
+    if(movesClockwise)
+    {
+        switch(head)
+        {
+        case North:      head = NorthEast; break;
+        case NorthEast:  head = East; break;
+        case East:       head = SouthEast; break;
+        case SouthEast:  head = South; break;
+        case South:      head = SouthWest;break;
+        case SouthWest:  head = West; break;
+        case West:       head = NorthWest; break;
+        case NorthWest:  head = North;
+        }
+    }
+    else
+    {
+        switch(head)
+        {
+        case North:      head = NorthWest; break;
+        case NorthWest:  head = West; break;
+        case West:       head = SouthWest; break;
+        case SouthWest:  head = South; break;
+        case South:      head = SouthEast; break;
+        case SouthEast:  head = East; break;
+        case East:       head = NorthEast; break;
+        case NorthEast:  head = North;
+        }
+    }
+}
+
+
+void Robot::changeHeadRotation()
+{
+    movesClockwise = !movesClockwise;
 }

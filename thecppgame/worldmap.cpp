@@ -6,7 +6,13 @@
 #include <cstdlib>
 #include "worldmap.h"
 #include "robot.h"
-// Function Definitions
+#include <mutex>
+
+/*
+   ---------------------------------------------------------------------------------------------------------------------
+   ------------------------------------- %% Constructor Definitions & Delegations %% -----------------------------------
+   ---------------------------------------------------------------------------------------------------------------------
+*/
 World::World(std::pair<int, int> dimensions,int obstacleCount, int robotCount): Game{},
     worldMapDimensions{dimensions}, numberOfObstacles{obstacleCount}, numberOfRobots{robotCount}
 {
@@ -145,125 +151,17 @@ void World:: addToMap(std::vector<std::pair<int, int>> coordinateList, char symb
 }
 
 
-void World::setLocationNext(std::pair<int, int> location,std::pair<int, int> information)
-{
-    (worldMap[location.first][location.second]).next.first = information.first;
-    (worldMap[location.first][location.second]).next.second = information.second;
-}
-
-
-void World::setLocationPrevious(std::pair<int, int> location,std::pair<int, int> information)
-{
-    (worldMap[location.first][location.second]).previous.first = information.first;
-    (worldMap[location.first][location.second]).previous.second = information.second;
-}
-
-
-void World::setLocationContent(std::pair<int, int> location,char information)
-{
-    (worldMap[location.first][location.second]).content = information;
-}
-
-
-void World::setLocationTrail(std::pair<int, int> location,char information)
-{
-    (worldMap[location.first][location.second]).trail = information;
-}
-
-
-void World::setLocationFlag(std::pair<int, int> location,bool information)
-{
-    (worldMap[location.first][location.second]).flag = information;
-}
-
-
-std::pair<int, int> World :: getStartLocation(bool generateNewLocation)
-{
-    if (generateNewLocation)
-    {
-        char agentID = (worldMap[startingLocations[0].first][startingLocations[0].second]).content;
-        //std::cout<<"Robot Agent ID :"<<agentID<<std::endl;
-        addToMap(startingLocations, '-');
-        // Generate 20 feasible coordinates randomly from the map
-        std::vector<std::pair<int, int>> newLocation = generateCoordinates(distributionRange, distributionRange);
-        // Amongst the coordinate list, pick a single coordinate randomly
-        std::srand((unsigned) std::time(NULL)); // provide a seed value
-        int offset = distributionRange/2; // offset changed in comparison to the one for stop location to generate distinct locations
-        int range = distributionRange - 1; // same as (the number of elements - 1) in newLocation vector
-        int random_index;
-        do{
-            random_index = offset + (std::rand() % range); // generate the index for random selection from list
-            //std::cout<<"Start: "<<newLocation.size()<<", "<<random_index<<std::endl;
-        }while(newLocation[random_index].first ==0 || newLocation[random_index].second ==0 || random_index >= newLocation.size());
-        startingLocations[0].first = newLocation[random_index].first;
-        startingLocations[0].second = newLocation[random_index].second;
-        std::cout<<"Location ID Before :"<<(worldMap[startingLocations[0].first][startingLocations[0].second]).content;
-        std::cout<<", Location: ("<<startingLocations[0].first<<","<<startingLocations[0].second<<")";
-        addToMap(startingLocations, agentID);
-        std::cout<<", Location ID After:"<<(worldMap[startingLocations[0].first][startingLocations[0].second]).content<<std::endl;
-
-    }
-
-    return startingLocations[0];
-}
-
-
-std::pair<int, int> World:: getStopLocation(bool generateNewLocation)
-{
-    if (generateNewLocation)
-    {
-        addToMap(destinationLocation, '-');
-        // Generate 20 feasible coordinates randomly from the map
-        std::vector<std::pair<int, int>> newLocation = generateCoordinates(distributionRange, distributionRange);
-        // Amongst the coordinate list, pick a single coordinate randomly
-        std::srand((unsigned) std::time(NULL)); // provide a seed value
-        int offset = 0;
-        int range = distributionRange - 1; // same as (the number of elements - 1) in newLocation vector
-        int random_index;
-        do{
-            random_index = offset + (std::rand() % range); // generate the index for random selection from list
-            //std::cout<<"Stop: "<<newLocation.size()<<", "<<random_index<<std::endl;
-        }while(newLocation[random_index].first ==0 || newLocation[random_index].second ==0 || random_index >= newLocation.size());
-        destinationLocation[0].first = newLocation[random_index].first;
-        destinationLocation[0].second = newLocation[random_index].second;
-        addToMap(destinationLocation, '@');
-    }
-    return destinationLocation[0];
-}
-
-
-bool World::getLocationFlag(std::pair<int, int> location)
-{
-    return (worldMap[location.first][location.second]).flag;
-}
-
-
-char World::getLocationContent(std::pair<int, int> location)
-{
-     return (worldMap[location.first][location.second]).content;
-}
-
-
-char World::getLocationTrail(std::pair<int, int> location)
-{
-     return (worldMap[location.first][location.second]).trail;
-}
-
-
-std::pair<int,int> World::getLocationPrevious(std::pair<int, int> location)
-{
-    return (worldMap[location.first][location.second]).previous;
-}
-
-
-std::pair<int,int> World::getLocationNext(std::pair<int, int> location)
-{
-    return (worldMap[location.first][location.second]).next;
-}
-
-
 std::vector<std::pair<int, int>> World:: getNeighborList(std::pair<int, int> location,direction headDirection, bool clockwiseHeadRotation)
 {
+    /*
+       Generates the list of neighbors (coordinates) for a robot agent in the world based on the direction specified
+       Inputs: 1) Current location co-ordinates
+               2) Direction of the head of the robot agent
+               3) Priority of Head rotation of the robot agent
+
+       Output: List of neighbor location coordinates for the robot
+    */
+
     std::vector<std::pair<int, int>> neighbors;
     //std::cout<<location.first<<", "<<location.second<<"\n"; //optional to check the coordinates
     if (clockwiseHeadRotation)
@@ -360,9 +258,22 @@ std::vector<std::pair<int, int>> World:: getNeighborList(std::pair<int, int> loc
 
 std::vector<std::pair<int, int>> World:: getTraversibleNeighborList(std::pair<int, int> location,direction head, bool clockwiseHeadRotation)
 {
+    /*
+       This method generates the neighbor co-ordinates that could be used to navigate by the robot.
+       It first generates all possible neighbor locations according to the direction preferences
+       of robot's head and head rotation and then validates each neighbor to eliminate the location
+       from the identified list, in case the location belongs to an obstacle or the boundary of the world.
+
+       Inputs: 1) current location coordinates
+               2) robot agent head direction
+               3) default direction preference for head rotation
+
+       Output: List of valid neighbor coordinates for the robot to traverse
+    */
+    // Determine the neighbors
     std::vector<std::pair<int, int>> neighbors = getNeighborList(location, head, clockwiseHeadRotation);
     std::vector<std::pair<int, int>> filteredNeighbors;
-
+    // Filer the neighbors
     for(auto it = neighbors.begin(); it!=neighbors.end(); ++it)
     {
         if (!(worldMap[(*it).first][(*it).second].content== '*' ||  worldMap[(*it).first][(*it).second].content== 'X'))
@@ -416,6 +327,239 @@ std::vector<std::pair<int, int>> World:: generateCoordinates(int distributionRan
 
     return  coordinates;
 }
+
+
+
+
+void World::generateObstacleLocations()
+{
+    obstacleLocations = generateCoordinates(distributionRange, numberOfObstacles);
+}
+
+
+bool World:: isValidMove(std::pair<int, int> nextPosition)
+{
+    /*
+      This method validates the location for a robot to traverse in the world. This is to identify
+      the boundaries of the world and the obstacles present in it ensure that robot agent is not
+      directed to move on them.
+
+      Inputs: Location co-ordinates
+      Output: validation boolean
+    */
+
+    // Read the content in the next location
+    char content = (worldMap[nextPosition.first][nextPosition.second]).content;
+    //std::cout<<"Next content: "<<content<<std::endl;
+    // If the next location is an empty space without an obstacle or a robot, return true
+    if (content < 88 && content != '*') // ASCII value for 'X' is 88
+    {
+        // the char value  is not 'X' or boundary and not anything in lower case alphabets
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+
+bool World:: moveFromTo(std::pair<int, int> currentLocation, std::pair<int, int> nextLocation, char robotID)
+{
+    /* This function checks if the next location proposed for the robot agent is appropriate.
+    If it is not appropriate, it returns 'X'. Otherwise, it returns the content of next location.
+    Inputs:
+            1. std::pair<int, int> currentLocation: current coordinate of robot in the worldmap
+            2. std::pair<int, int> nextLocation: next coordinate of robot in the world map
+            3. char robotID: ID of the robot (a, b, c, etc..)
+    Outputs: char content: Content of the next location of the robot
+    */
+    // Validate the move once again.
+    bool validateMove = isValidMove(nextLocation);
+    char content = 'X';
+    if (validateMove)
+    {
+
+
+        // Store the char in the next location
+        content = (worldMap[nextLocation.first][nextLocation.second]).content;
+        // Move the robot to the next location
+        (worldMap[nextLocation.first][nextLocation.second]).content = robotID;
+        // Empty the previous location from where robot has been displaced
+        (worldMap[currentLocation.first][currentLocation.second]).content = '-';
+
+
+        return true;
+
+    }
+    return false;
+}
+
+
+// Public Function definitions
+
+/*
+   ---------------------------------------------------------------------------------------------------------------------
+   -----------------------------------------------------%% Getter Methods %% -------------------------------------------
+   ---------------------------------------------------------------------------------------------------------------------
+*/
+
+std::pair<int, int> World:: getWorldDimensions()
+{
+    return worldMapDimensions;
+}
+
+
+std::pair<int, int> World :: getStartLocation(bool generateNewLocation)
+{
+    if (generateNewLocation)
+    {
+        char agentID = (worldMap[startingLocations[0].first][startingLocations[0].second]).content;
+        //std::cout<<"Robot Agent ID :"<<agentID<<std::endl;
+        addToMap(startingLocations, '-');
+        // Generate 20 feasible coordinates randomly from the map
+        std::vector<std::pair<int, int>> newLocation = generateCoordinates(distributionRange, distributionRange);
+        // Amongst the coordinate list, pick a single coordinate randomly
+        std::srand((unsigned) std::time(NULL)); // provide a seed value
+        int offset = distributionRange/2; // offset changed in comparison to the one for stop location to generate distinct locations
+        int range = distributionRange - 1; // same as (the number of elements - 1) in newLocation vector
+        int random_index;
+        do{
+            random_index = offset + (std::rand() % range); // generate the index for random selection from list
+            //std::cout<<"Start: "<<newLocation.size()<<", "<<random_index<<std::endl;
+        }while(newLocation[random_index].first ==0 || newLocation[random_index].second ==0 || random_index >= newLocation.size());
+        startingLocations[0].first = newLocation[random_index].first;
+        startingLocations[0].second = newLocation[random_index].second;
+        std::cout<<"Location ID Before :"<<(worldMap[startingLocations[0].first][startingLocations[0].second]).content;
+        std::cout<<", Location: ("<<startingLocations[0].first<<","<<startingLocations[0].second<<")";
+        addToMap(startingLocations, agentID);
+        std::cout<<", Location ID After:"<<(worldMap[startingLocations[0].first][startingLocations[0].second]).content<<std::endl;
+
+    }
+
+    return startingLocations[0];
+}
+
+
+std::pair<int, int> World:: getStopLocation(bool generateNewLocation)
+{
+    if (generateNewLocation)
+    {
+        addToMap(destinationLocation, '-');
+        // Generate 20 feasible coordinates randomly from the map
+        std::vector<std::pair<int, int>> newLocation = generateCoordinates(distributionRange, distributionRange);
+        // Amongst the coordinate list, pick a single coordinate randomly
+        std::srand((unsigned) std::time(NULL)); // provide a seed value
+        int offset = 0;
+        int range = distributionRange - 1; // same as (the number of elements - 1) in newLocation vector
+        int random_index;
+        do{
+            random_index = offset + (std::rand() % range); // generate the index for random selection from list
+            //std::cout<<"Stop: "<<newLocation.size()<<", "<<random_index<<std::endl;
+        }while(newLocation[random_index].first ==0 || newLocation[random_index].second ==0 || random_index >= newLocation.size());
+        destinationLocation[0].first = newLocation[random_index].first;
+        destinationLocation[0].second = newLocation[random_index].second;
+        addToMap(destinationLocation, '@');
+    }
+    return destinationLocation[0];
+}
+
+
+bool World::getLocationFlag(std::pair<int, int> location)
+{
+    if(location.first >= 0 && location.second >=0
+       && location.first < worldMapDimensions.first && location.second < worldMapDimensions.second)
+    {
+        return (worldMap[location.first][location.second]).flag;
+    }
+    return false;
+}
+
+
+char World::getLocationContent(std::pair<int, int> location)
+{
+    //std::cout<<"Next Location: ("<<location.first<<","<<location.second<<")"<<std::endl;
+    if(location.first >= 0 && location.second >=0
+       && location.first < worldMapDimensions.first && location.second < worldMapDimensions.second)
+    {
+        return (worldMap[location.first][location.second]).content;
+    }
+     return '*';
+}
+
+
+char World::getLocationTrail(std::pair<int, int> location)
+{
+    if(location.first >= 0 && location.second >=0
+       && location.first < worldMapDimensions.first && location.second < worldMapDimensions.second)
+    {
+        return (worldMap[location.first][location.second]).trail;
+    }
+     return '*';
+}
+
+
+std::pair<int,int> World::getLocationPrevious(std::pair<int, int> location)
+{
+    if(location.first >= 0 && location.second >=0
+       && location.first < worldMapDimensions.first && location.second < worldMapDimensions.second)
+    {
+        return (worldMap[location.first][location.second]).previous;
+    }
+    return std::make_pair(1,1);
+}
+
+
+std::pair<int,int> World::getLocationNext(std::pair<int, int> location)
+{
+    if(location.first >= 0 && location.second >=0
+       && location.first < worldMapDimensions.first && location.second < worldMapDimensions.second)
+    {
+        return (worldMap[location.first][location.second]).next;
+    }
+    return std::make_pair(1,1);
+}
+
+
+/*
+   ---------------------------------------------------------------------------------------------------------------------
+   -----------------------------------------------------%% Setter Methods %% -------------------------------------------
+   ---------------------------------------------------------------------------------------------------------------------
+*/
+
+
+void World::setLocationNext(std::pair<int, int> location,std::pair<int, int> information)
+{
+    (worldMap[location.first][location.second]).next.first = information.first;
+    (worldMap[location.first][location.second]).next.second = information.second;
+}
+
+
+void World::setLocationPrevious(std::pair<int, int> location,std::pair<int, int> information)
+{
+    (worldMap[location.first][location.second]).previous.first = information.first;
+    (worldMap[location.first][location.second]).previous.second = information.second;
+}
+
+
+void World::setLocationContent(std::pair<int, int> location,char information)
+{
+    (worldMap[location.first][location.second]).content = information;
+}
+
+
+void World::setLocationTrail(std::pair<int, int> location,char information)
+{
+    (worldMap[location.first][location.second]).trail = information;
+}
+
+
+void World::setLocationFlag(std::pair<int, int> location,bool information)
+{
+    (worldMap[location.first][location.second]).flag = information;
+}
+
 
 void World::setObstacleCount(int obstacleCount)
 {
@@ -481,67 +625,12 @@ void World::resetObstacleLocations()
 }
 
 
-void World::generateObstacleLocations()
-{
-    obstacleLocations = generateCoordinates(distributionRange, numberOfObstacles);
-}
-
-
-bool World:: isValidMove(std::pair<int, int> nextPosition)
-{
-    // If the next location is an empty space without an obstacle, return true
-    if ((worldMap[nextPosition.first][nextPosition.second]).content== '-')
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-std::pair<int, int> World:: getWorldDimensions()
-{
-    return worldMapDimensions;
-}
-
-bool World:: moveFromTo(std::pair<int, int> currentLocation, std::pair<int, int> nextLocation, char robotID)
-{
-    bool validateMove = isValidMove(nextLocation);
-    if (validateMove)
-    {
-        // Move the robot to the next location
-        (worldMap[nextLocation.first][nextLocation.second]).content = robotID;
-        // Empty the previous location from where robot has been displaced
-        (worldMap[currentLocation.first][currentLocation.second]).content = '-';
-        return true;
-
-    }
-    else{
-        return false;
-    }
-}
-/*
-Robot World::addRobot(std::pair<int, int> startPosition, direction head, bool motion, bool mode, bool status)
-{
-    // Create a new thread for the Robot
-
-    // Initialize a Robot
-    Robot robotInstance(startPosition, head, motion, mode, status);
-
-
-    // Run the robot
-
-
-}
-
-
-*/
-
 void World::show(int fieldID)
 {
-    int length = worldMapDimensions.first;
-    int breadth = worldMapDimensions.second;
+    /*This function displays the wolrd contents as per the filedID
+      Inputs: int filedID : The id of the filed to be display in each location of the world
+      Outputs: None
+    */
     // Print
 
     for (auto &row : worldMap)
@@ -580,22 +669,7 @@ void World::show(int fieldID)
         }
         std::cout<<"\n";
     }
-
+    std::cout<<"\n";
 }
 
-/*
-bool World::addRobot(int row, int col) {
-  map_[row][col] = 'A';
-  return true;
-}
-
-void World::run() {
-  while (true) {
-    display();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  }
-}
-
-
-*/
 

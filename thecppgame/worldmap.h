@@ -59,6 +59,7 @@ class World : protected Game{
     void show(int fieldID=0);
     bool addRobot(std::pair<int, int> startPosition, direction head, bool motion, bool mode, bool status);
     bool moveFromTo(std::pair<int, int> currentLocation, std::pair<int, int> nextLocation, char robotID);
+
     // Getters
     std::pair<int , int> getRobotLocation(int robotID, int steps);
     std::pair<int, int> getWorldDimensions();
