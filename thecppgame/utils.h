@@ -33,4 +33,5 @@ direction askHeadDirection();
 std::pair<int, int> askUserForNextStep(World & wmap, std::pair<int, int> currentLocation);
 float askGameTime();
 int askNumberOfRobots();
+direction pickRandomDirection();
 #endif

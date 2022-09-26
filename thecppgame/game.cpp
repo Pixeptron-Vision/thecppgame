@@ -203,6 +203,7 @@ bool Game::spawnRobots(World& wmap, int numberOfRobots, direction head, float ro
         for(int i=0; i< numberOfRobots; ++i)
             {
                 // Create a robot object
+                head = pickRandomDirection();
                 Robot agent(startPosition, stopPosition, head, motionDirection, opMode, robotTimeUnit); // Initiialize robot with appropriate parameters
                 agent.ID += i;
                 switch (currentMode)
@@ -482,6 +483,23 @@ void Game::runRobotsMultiple(Robot agent, World& wmap)
         gameMutex.lock(); // lock the resource
         // Determine next step content
         content = wmap.getLocationContent(nextStep);
+        switch(content)
+        {
+            case '@':
+                {
+                    gameEnd = true;
+                    break;
+                }
+            case '+':
+                {
+                    agent.life += 1;
+                    break;
+                }
+            case 'O':
+                {
+                    agent.life -= 1;
+                }
+        }
         // Validate next step
         validLocation = wmap.moveFromTo(location, nextStep, agent.ID); // locationContent unused at the moment
         gameMutex.unlock(); // unlock the resource
@@ -495,25 +513,7 @@ void Game::runRobotsMultiple(Robot agent, World& wmap)
         {
             // For a valid next location:
             // update the current location and perform appropriate operations based on the location's content
-            switch(content)
-            {
-                case '@':
-                    {
-                        gameEnd = true;
-                        break;
-                    }
-                case '+':
-                    {
-                        agent.life += 1;
-                        break;
-                    }
-                case 'O':
-                    {
-                        agent.life -= 1;
-                    }
-            }
             agent.setCurrentLocation(nextStep);
-
         }
         // Give delay for next step
         std::this_thread::sleep_for(std::chrono::milliseconds(1500));

@@ -673,3 +673,10 @@ void World::show(int fieldID)
 }
 
 
+void World::dissolveRobot(std::pair<int, int>robotLocation)
+{
+    /*
+      This function removes the Robot ID from the worldmap and assigns a gap to the robot's location
+    */
+    (worldMap[robotLocation.first][robotLocation.second]).content = '-';
+}

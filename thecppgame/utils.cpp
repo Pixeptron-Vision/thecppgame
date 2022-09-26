@@ -4,6 +4,7 @@
 #include "worldmap.h"
 #include "game.h"
 #include "utility"
+#include <random>
 // C libraries to control console input
 #include <unistd.h>
 #include <cstdlib>
@@ -332,4 +333,22 @@ int askNumberOfRobots()
 
     return numberOfRobots;
 
+}
+
+
+direction pickRandomDirection()
+{
+    std::srand((unsigned) std::time(NULL)); // provide a seed value
+    int random_index = std::rand() % 7;
+    switch(random_index)
+    {
+    case 0:  return NorthEast;
+    case 1:  return East;
+    case 2:  return SouthEast;
+    case 3:  return South;
+    case 4:  return SouthWest;
+    case 5:  return West;
+    case 6:  return NorthWest;
+    case 7:  return North;
+    }
 }
