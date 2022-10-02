@@ -27,15 +27,11 @@ The robot agents in the game abide by the following rules:
 **World Map:** The following picture depicts a 5 x 5 world map with robot agents, obstacles, collectibles/life savers and a destination in it. The description for various symbols in the map is as follows: 
 
 | Symbol | Description |
-
+| ------ | ----------- |
 |+ 		 | Life savers |         
-
 |X 		 | Obstacles   |
-
 |O 		 | Holes       |
-
 |@ 		 | Destination |
-
 |a, b,...| Robot Agents|
  
 **Play:** The game can be run through the executable “thecppgame.exe” present here on the repository. 
@@ -46,7 +42,7 @@ The robot agents in the game abide by the following rules:
     - Merits: Provides a simple yet useful way to generate coordinates for obstacles, holes and collectible locations in the world map of the game. 
     - Demerits: Yet to be studied. 
 
-**References:**
+## References:
 - https://stackoverflow.com/questions/26086128/generate-different-random-coordinates
 - https://raymii.org/s/articles/Cpp_async_threads_and_user_input.html
 - https://www.justsoftwaresolutions.co.uk/threading/multithreading-in-c++0x-part-1-starting-threads.html
