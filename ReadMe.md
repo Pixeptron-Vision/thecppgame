@@ -27,10 +27,15 @@ The robot agents in the game abide by the following rules:
 **World Map:** The following picture depicts a 5 x 5 world map with robot agents, obstacles, collectibles/life savers and a destination in it. The description for various symbols in the map is as follows: 
 
 | Symbol | Description |
+
 |+ 		 | Life savers |         
+
 |X 		 | Obstacles   |
+
 |O 		 | Holes       |
+
 |@ 		 | Destination |
+
 |a, b,...| Robot Agents|
  
 **Play:** The game can be run through the executable “thecppgame.exe” present here on the repository. 
